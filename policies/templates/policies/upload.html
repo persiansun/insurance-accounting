@@ -1,0 +1,356 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}آپلود فایل اکسل - نرم‌افزار حسابداری بیمه{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-upload ms-2"></i>آپلود فایل اکسل</h4>
+    <p class="text-muted">بارگذاری گزارش فروش بیمه از نرم‌افزار فروش</p>
+</div>
+
+{% if preview_data %}
+    {# ─── Preview State: show parsed records before import ─── #}
+    <div class="content-card fade-in">
+        <div class="card-header-custom">
+            <h5>
+                <i class="fas fa-eye ms-2" style="color: var(--info);"></i>
+                پیش‌نمایش داده‌ها
+                {% if insurance_type_name %}
+                    <span class="badge ms-2" style="background: var(--primary); color: white; font-size: 0.8rem;">
+                        {{ insurance_type_name }}
+                    </span>
+                {% endif %}
+            </h5>
+            <span class="badge" style="background: var(--primary); color: white; font-size: 0.85rem; padding: 5px 15px; border-radius: 20px;">
+                <i class="fas fa-database ms-1"></i>{{ total_count|intcomma }} رکورد
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-custom table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>کد رایانه</th>
+                        <th>بیمه گذار</th>
+                        <th>پلاک</th>
+                        <th>تاریخ شروع</th>
+                        <th>تاریخ انقضا</th>
+                        <th>وضعیت</th>
+                        <th>مبلغ کل (ریال)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in preview_data %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <span class="text-muted" style="font-size: 0.85rem; direction: ltr; display: inline-block;">
+                                {{ item.policy_code|default:'-' }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ item.policyholder_clean|default:item.policyholder|default:'-'|truncatechars:35 }}</strong>
+                        </td>
+                        <td>
+                            <span style="direction: ltr; display: inline-block; font-size: 0.85rem;">
+                                {{ item.plate_number|default:'-' }}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.85rem;">{{ item.start_date|default:'-' }}</td>
+                        <td style="font-size: 0.85rem;">{{ item.end_date|default:'-' }}</td>
+                        <td>
+                            {% if item.status %}
+                                <span class="status-badge status-{% if item.status == 'فعال' or item.status == 'active' %}paid{% elif item.status == 'لغو' or item.status == 'canceled' %}overdue{% else %}pending{% endif %}">
+                                    {{ item.status }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-start" style="font-family: monospace;">
+                            <strong>{{ item.total_with_tax|floatformat:0|intcomma|default:'-' }}</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ─── Import confirmation form ─── #}
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-4 pt-3" style="border-top: 2px solid var(--gray-bg);">
+            <div>
+                <p class="mb-1 text-muted small">
+                    <i class="fas fa-info-circle ms-1"></i>
+                    با تأیید، داده‌ها در دیتابیس ذخیره شده و به لیست بیمه نامه‌ها هدایت می‌شوید.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                {# Back button: upload a different file #}
+                <a href="{% url 'policies:upload' %}" class="btn btn-outline-custom">
+                    <i class="fas fa-arrow-right ms-1"></i>بازگشت
+                </a>
+                {# Import button #}
+                <form method="post" enctype="multipart/form-data" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="file_path" value="{{ file_path }}">
+                    <button type="submit" name="action" value="import" class="btn btn-primary-custom">
+                        <i class="fas fa-check-circle ms-1"></i>✅ تأیید و ذخیره در دیتابیس
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    {# ─── Upload State: drag-and-drop file input ─── #}
+    <div class="content-card fade-in">
+        <div class="card-header-custom">
+            <h5><i class="fas fa-file-excel ms-2" style="color: var(--success);"></i>انتخاب فایل اکسل</h5>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+
+            {# ─── Drag-and-drop area ─── #}
+            <div class="upload-area" id="uploadArea"
+                 style="border: 2px dashed #c4c4c4; border-radius: 16px; padding: 50px 20px; text-align: center; cursor: pointer; transition: all 0.25s ease; background: var(--gray-bg);"
+                 onclick="document.getElementById('id_excel_file').click()"
+                 ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#e8eaf6';"
+                 ondragleave="this.style.borderColor='#c4c4c4'; this.style.background='var(--gray-bg)';"
+                 ondrop="event.preventDefault(); handleDrop(event)">
+                <div>
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 3.5rem; color: var(--primary);"></i>
+                    <h5 class="mt-3 fw-bold" style="color: var(--primary);">
+                        فایل اکسل خود را اینجا رها کنید
+                    </h5>
+                    <p class="text-muted mb-0">
+                        یا برای انتخاب فایل کلیک کنید
+                    </p>
+                    <p class="text-muted small mt-2 mb-0">
+                        <i class="fas fa-file-code ms-1"></i>فقط .xlsx — حداکثر ۵۰ مگابایت
+                    </p>
+                </div>
+            </div>
+
+            {# ─── Hidden file input + file name display ─── #}
+            <div class="mt-3" id="fileInfo" style="display: none;">
+                <div class="d-flex align-items-center gap-3 p-3 rounded" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
+                    <i class="fas fa-check-circle" style="font-size: 1.8rem; color: var(--success);"></i>
+                    <div class="flex-grow-1">
+                        <strong id="fileNameDisplay" class="d-block"></strong>
+                        <small id="fileSizeDisplay" class="text-muted"></small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-custom" onclick="resetFileInput()">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+            </div>
+
+            {# ─── Form field (hidden via CSS, triggered via drag-drop area) ─── #}
+            <div class="mb-3" style="display: none;">
+                <label for="{{ form.excel_file.id_for_label }}" class="form-label">{{ form.excel_file.label }}</label>
+                {{ form.excel_file }}
+                {% if form.excel_file.help_text %}
+                    <div class="form-text">{{ form.excel_file.help_text }}</div>
+                {% endif %}
+                {% if form.excel_file.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.excel_file.errors %}
+                            <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {# ─── Show form-level errors ─── #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger mt-3">
+                    {% for error in form.non_field_errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# ─── Error display for the file field ─── #}
+            {% if form.excel_file.errors %}
+                <div class="alert alert-danger mt-3 d-flex align-items-center gap-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        {% for error in form.excel_file.errors %}
+                            <small class="d-block">{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {# ─── Submit button ─── #}
+            <div class="text-center mt-4">
+                <button type="submit" name="action" value="preview" class="btn btn-primary-custom btn-lg px-5" id="previewBtn" disabled>
+                    <i class="fas fa-eye ms-2"></i>پیش‌نمایش
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# ─── Help section ─── #}
+    <div class="content-card fade-in">
+        <div class="card-header-custom">
+            <h5><i class="fas fa-question-circle ms-2" style="color: var(--warning);"></i>راهنما</h5>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-file-excel" style="font-size: 2rem; color: var(--success);"></i>
+                    <h6 class="mt-2 fw-bold">۱. انتخاب فایل</h6>
+                    <p class="text-muted small mb-0">
+                        فایل اکسل گزارش فروش بیمه را با پسوند .xlsx انتخاب کنید.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-eye" style="font-size: 2rem; color: var(--info);"></i>
+                    <h6 class="mt-2 fw-bold">۲. پیش‌نمایش</h6>
+                    <p class="text-muted small mb-0">
+                        پس از بارگذاری، داده‌ها را پیش‌نمایش کنید و از صحت آن مطمئن شوید.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-save" style="font-size: 2rem; color: var(--primary);"></i>
+                    <h6 class="mt-2 fw-bold">۳. ذخیره</h6>
+                    <p class="text-muted small mb-0">
+                        در صورت تأیید، داده‌ها به دیتابیس اضافه یا به‌روزرسانی می‌شوند.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <hr class="my-3">
+        <div class="alert alert-custom alert-info d-flex align-items-center gap-2 mb-0" style="background: #e3f2fd;">
+            <i class="fas fa-lightbulb" style="color: var(--info); font-size: 1.2rem;"></i>
+            <small class="text-muted">
+                فایل باید از شیت <code>CarSalesBNVer</code> نرم‌افزار فروش بیمه استخراج شده باشد.
+            </small>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Drag hover effect */
+    .upload-area.dragover {
+        border-color: var(--primary) !important;
+        background: #e8eaf6 !important;
+        transform: scale(1.02);
+    }
+    .upload-area.has-file {
+        border-color: var(--success) !important;
+        background: #e8f5e9 !important;
+    }
+    /* Table row hover */
+    .table-custom tbody tr:hover {
+        background: #e8eaf6 !important;
+    }
+    /* Monospace numbers alignment */
+    .table-custom td.text-start {
+        direction: ltr;
+        text-align: right !important;
+    }
+    /* Responsive table */
+    @media (max-width: 768px) {
+        .table-custom {
+            font-size: 0.8rem;
+        }
+        .content-card {
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Expose file input to the global scope for onclick handler
+    document.addEventListener('DOMContentLoaded', function() {
+        var fileInput = document.getElementById('id_excel_file');
+        var uploadArea = document.getElementById('uploadArea');
+        var fileInfo = document.getElementById('fileInfo');
+        var fileNameDisplay = document.getElementById('fileNameDisplay');
+        var fileSizeDisplay = document.getElementById('fileSizeDisplay');
+        var previewBtn = document.getElementById('previewBtn');
+
+        if (!fileInput || !uploadArea) return;
+
+        // When user selects file via the hidden input
+        fileInput.addEventListener('change', function(e) {
+            handleFileSelected(e);
+        });
+
+        function handleFileSelected(e) {
+            var file = e.target.files[0];
+            if (file) {
+                // Validate extension
+                if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                    alert('لطفاً فقط فایل با پسوند .xlsx انتخاب کنید.');
+                    fileInput.value = '';
+                    return;
+                }
+                // Validate size (50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    alert('حجم فایل نباید بیشتر از ۵۰ مگابایت باشد.');
+                    fileInput.value = '';
+                    return;
+                }
+                showFileInfo(file);
+                uploadArea.classList.add('has-file');
+                previewBtn.disabled = false;
+            }
+        }
+
+        function showFileInfo(file) {
+            fileInfo.style.display = 'block';
+            fileNameDisplay.textContent = file.name;
+            var size = file.size;
+            if (size < 1024) {
+                fileSizeDisplay.textContent = size + ' بایت';
+            } else if (size < 1024 * 1024) {
+                fileSizeDisplay.textContent = (size / 1024).toFixed(1) + ' کیلوبایت';
+            } else {
+                fileSizeDisplay.textContent = (size / (1024 * 1024)).toFixed(1) + ' مگابایت';
+            }
+            // Update upload area text
+            uploadArea.querySelector('h5').textContent = '🗂 ' + file.name;
+            uploadArea.querySelector('.text-muted.mb-0').textContent = 'فایل انتخاب شد — برای تغییر دوباره کلیک کنید';
+        }
+
+        // Handle drag-and-drop
+        window.handleDrop = function(event) {
+            var files = event.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                var changeEvent = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(changeEvent);
+            }
+        };
+
+        // Reset file input
+        window.resetFileInput = function() {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadArea.classList.remove('has-file');
+            previewBtn.disabled = true;
+            uploadArea.querySelector('h5').textContent = 'فایل اکسل خود را اینجا رها کنید';
+            uploadArea.querySelector('.text-muted.mb-0').textContent = 'یا برای انتخاب فایل کلیک کنید';
+        };
+
+        // Re-enable preview button on page load if a file is already selected (browser autofill)
+        if (fileInput.files.length > 0) {
+            previewBtn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

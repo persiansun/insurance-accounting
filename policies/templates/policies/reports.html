@@ -1,0 +1,118 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}گزارش‌ها{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-chart-bar ms-2"></i>گزارش‌ها</h4>
+    <p class="text-muted">آمار و گزارش‌های مالی</p>
+</div>
+
+<!-- Status Distribution -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="icon" style="background: #e8f5e9; color: #2e7d32;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="number" style="color: var(--success);">{{ status_counts.paid|default:0 }}</div>
+            <div class="label">پرداخت شده</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="icon" style="background: #e3f2fd; color: #0277bd;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="number" style="color: var(--info);">{{ status_counts.pending|default:0 }}</div>
+            <div class="label">در انتظار</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="icon" style="background: #ffebee; color: #c62828;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="number" style="color: var(--danger);">{{ status_counts.overdue|default:0 }}</div>
+            <div class="label">دیرکرد</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="icon" style="background: #fff3e0; color: #e65100;">
+                <i class="fas fa-adjust"></i>
+            </div>
+            <div class="number" style="color: #e65100;">{{ status_counts.partial|default:0 }}</div>
+            <div class="label">پرداخت جزیی</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Monthly Report -->
+    <div class="col-lg-7">
+        <div class="content-card">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-calendar-alt ms-2" style="color: var(--info);"></i>گزارش ماهانه واریزی‌ها (۶ ماه اخیر)</h5>
+            </div>
+            {% if monthly_data %}
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>ماه</th>
+                                <th>تعداد واریزی</th>
+                                <th>جمع واریزی (ریال)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in monthly_data %}
+                            <tr>
+                                <td>{{ item.month }}</td>
+                                <td>{{ item.count }}</td>
+                                <td class="fw-bold">{{ item.total|intcomma }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-3">داده‌ای برای نمایش وجود ندارد.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="col-lg-5">
+        <div class="content-card">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-download ms-2" style="color: var(--success);"></i>خروجی اکسل</h5>
+            </div>
+            <p class="text-muted small mb-3">گزارش‌های مورد نظر خود را به صورت فایل اکسل دریافت کنید.</p>
+            <div class="d-grid gap-2">
+                <a href="{% url 'policies:export_excel' %}?type=policies" class="btn btn-outline-custom text-start">
+                    <i class="fas fa-file-contract ms-2"></i> خروجی اکسل بیمه نامه‌ها
+                </a>
+                <a href="{% url 'policies:export_excel' %}?type=installments" class="btn btn-outline-custom text-start">
+                    <i class="fas fa-list-ol ms-2"></i> خروجی اکسل اقساط
+                </a>
+                <a href="{% url 'policies:export_excel' %}?type=payments" class="btn btn-outline-custom text-start">
+                    <i class="fas fa-money-bill-wave ms-2"></i> خروجی اکسل واریزی‌ها
+                </a>
+            </div>
+        </div>
+
+        <!-- Daily Report Quick Link -->
+        <div class="content-card mt-3">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-calendar-day ms-2" style="color: var(--warning);"></i>گزارش روزانه</h5>
+            </div>
+            <p class="text-muted small">مشاهده اقساط سررسید شده در تاریخ مشخص.</p>
+            <a href="{% url 'policies:daily_report' %}" class="btn btn-primary-custom w-100">
+                <i class="fas fa-eye ms-1"></i> مشاهده گزارش روزانه
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

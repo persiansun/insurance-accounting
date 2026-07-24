@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نرم‌افزار حسابداری بیمه{% endblock %}</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Vazirmatn Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1a237e;
+            --primary-light: #283593;
+            --primary-dark: #0d1452;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --warning: #f9a825;
+            --info: #0277bd;
+            --gray-bg: #f5f6fa;
+            --card-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        * {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+        }
+
+        body {
+            background-color: var(--gray-bg);
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 240px;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            z-index: 1000;
+            transition: all 0.3s;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .sidebar-brand i {
+            font-size: 1.5rem;
+            margin-left: 8px;
+        }
+
+        .sidebar-nav {
+            padding: 15px 0;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-right: 3px solid transparent;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-right-color: #64b5f6;
+        }
+
+        .sidebar-nav a i {
+            width: 24px;
+            margin-left: 10px;
+            text-align: center;
+        }
+
+        .sidebar-nav .badge {
+            margin-right: auto;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-right: 240px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Cards */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s;
+            border: none;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        /* Content card */
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .content-card .card-header-custom {
+            border-bottom: 2px solid var(--gray-bg);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .content-card .card-header-custom h5 {
+            margin: 0;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Tables */
+        .table-custom {
+            font-size: 0.9rem;
+        }
+
+        .table-custom thead {
+            background: var(--gray-bg);
+        }
+
+        .table-custom th {
+            font-weight: 600;
+            color: #444;
+            border-bottom: none;
+            white-space: nowrap;
+        }
+
+        .table-custom td {
+            vertical-align: middle;
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-paid {
+            background: #e8f5e9;
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: #e3f2fd;
+            color: var(--info);
+        }
+
+        .status-overdue {
+            background: #ffebee;
+            color: var(--danger);
+        }
+
+        .status-partial {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        /* Page header */
+        .page-header {
+            margin-bottom: 25px;
+        }
+
+        .page-header h4 {
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .page-header .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Buttons */
+        .btn-primary-custom {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-weight: 500;
+        }
+
+        .btn-primary-custom:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        .btn-outline-custom {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-weight: 500;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Forms */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 0.2rem rgba(26, 35, 126, 0.15);
+        }
+
+        /* Installment timeline */
+        .timeline {
+            position: relative;
+            padding-right: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            right: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: var(--gray-bg);
+            border-radius: 8px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            right: -22px;
+            top: 15px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--info);
+            border: 2px solid white;
+        }
+
+        .timeline-item.paid::before {
+            background: var(--success);
+        }
+
+        .timeline-item.overdue::before {
+            background: var(--danger);
+        }
+
+        /* Alert messages */
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+        }
+
+        /* Search box */
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+        }
+
+        .search-box input {
+            padding-right: 40px;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+            .sidebar.show {
+                width: 240px;
+            }
+            .main-content {
+                margin-right: 0;
+            }
+            .mobile-toggle {
+                display: block !important;
+            }
+        }
+
+        .mobile-toggle {
+            display: none;
+        }
+
+        /* Print */
+        @media print {
+            .sidebar, .no-print { display: none; }
+            .main-content { margin-right: 0; }
+        }
+
+        /* Progress bar */
+        .progress-custom {
+            height: 8px;
+            border-radius: 4px;
+            background: var(--gray-bg);
+        }
+
+        .progress-custom .progress-bar {
+            border-radius: 4px;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--gray-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4c4c4;
+            border-radius: 3px;
+        }
+        /* RTL fixes for Bootstrap */
+        .me-2 {
+            margin-left: 0.5rem !important;
+            margin-right: 0 !important;
+        }
+        .ms-2 {
+            margin-right: 0.5rem !important;
+            margin-left: 0 !important;
+        }
+        .text-start {
+            text-align: right !important;
+        }
+        .text-end {
+            text-align: left !important;
+        }
+        .float-start {
+            float: right !important;
+        }
+        .float-end {
+            float: left !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <i class="fas fa-shield-alt"></i>
+        حسابداری بیمه
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'policies:dashboard' %}"
+           class="{% if section == 'dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i>
+            داشبورد
+        </a>
+        <a href="{% url 'policies:upload' %}"
+           class="{% if section == 'upload' %}active{% endif %}">
+            <i class="fas fa-upload"></i>
+            آپلود فایل اکسل
+        </a>
+        <a href="{% url 'policies:policy_list' %}"
+           class="{% if section == 'policies' %}active{% endif %}">
+            <i class="fas fa-file-contract"></i>
+            لیست بیمه نامه‌ها
+        </a>
+        <a href="{% url 'policies:reports' %}"
+           class="{% if section == 'reports' %}active{% endif %}">
+            <i class="fas fa-chart-bar"></i>
+            گزارش‌ها
+        </a>
+        <a href="{% url 'policies:daily_report' %}"
+           class="{% if section == 'daily' %}active{% endif %}">
+            <i class="fas fa-calendar-day"></i>
+            اقساط روزانه
+        </a>
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
+        <a href="/admin/" target="_blank">
+            <i class="fas fa-cog"></i>
+            پنل مدیریت
+        </a>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Top bar -->
+    <div class="d-flex align-items-center justify-content-between mb-3 no-print">
+        <button class="btn btn-outline-custom mobile-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">
+                <i class="far fa-calendar ms-1"></i>
+                {{ today_date|default:'' }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-custom alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Page Content -->
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Toggle sidebar on mobile
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('show');
+    }
+
+    // Auto-dismiss alerts
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            document.querySelectorAll('.alert-dismissible').forEach(function(el) {
+                var bsAlert = new bootstrap.Alert(el);
+                bsAlert.close();
+            });
+        }, 5000);
+    });
+
+    // Format numbers with commas
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Auto-format date inputs globally: 14050501 → 1405/05/01 on blur
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[type="text"][dir="ltr"]').forEach(function(input) {
+            if (input.placeholder && input.placeholder.includes('/')) {
+                input.addEventListener('blur', function() {
+                    var val = this.value.replace(/\s/g, '');
+                    if (val && !val.includes('/') && val.length === 8 && /^\d+$/.test(val)) {
+                        this.value = val.substring(0, 4) + '/' + val.substring(4, 6) + '/' + val.substring(6, 8);
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

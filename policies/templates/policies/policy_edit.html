@@ -1,0 +1,197 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}ویرایش بیمه نامه - {{ policy.policyholder }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-edit ms-2"></i>ویرایش بیمه نامه</h4>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'policies:policy_list' %}">لیست</a></li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'policies:policy_detail' policy.pk %}">{{ policy.policyholder|truncatechars:20 }}</a>
+                </li>
+                <li class="breadcrumb-item active">ویرایش</li>
+            </ol>
+        </nav>
+    </div>
+    <a href="{% url 'policies:policy_detail' policy.pk %}" class="btn btn-outline-custom">
+        <i class="fas fa-arrow-right ms-1"></i> بازگشت
+    </a>
+</div>
+
+<div class="content-card">
+    <div class="card-header-custom">
+        <h5><i class="fas fa-info-circle ms-2" style="color: var(--info);"></i>اطلاعات بیمه نامه</h5>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row g-3">
+            <!-- Contact Information (new fields) -->
+            <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3" style="color: var(--primary);">
+                    <i class="fas fa-address-card ms-1"></i> اطلاعات تماس
+                </h6>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.policyholder.label }}</label>
+                {{ form.policyholder }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.insurance_type.label }}</label>
+                {{ form.insurance_type }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                    <div class="text-danger small">{{ form.phone.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.national_code.label }}</label>
+                {{ form.national_code }}
+            </div>
+            <div class="col-12">
+                <label class="form-label small">{{ form.address.label }}</label>
+                {{ form.address }}
+            </div>
+
+            <!-- Policy Information -->
+            <div class="col-12 mt-3">
+                <h6 class="border-bottom pb-2 mb-3" style="color: var(--primary);">
+                    <i class="fas fa-file-contract ms-1"></i> اطلاعات بیمه نامه
+                </h6>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.policy_number.label }}</label>
+                {{ form.policy_number }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.status.label }}</label>
+                {{ form.status }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.agent_name.label }}</label>
+                {{ form.agent_name }}
+            </div>
+            <div class="col-12">
+                <label class="form-label small">{{ form.contract_description.label }}</label>
+                {{ form.contract_description }}
+            </div>
+
+            <!-- Vehicle Information -->
+            <div class="col-12 mt-3">
+                <h6 class="border-bottom pb-2 mb-3" style="color: var(--primary);">
+                    <i class="fas fa-car ms-1"></i> اطلاعات خودرو
+                </h6>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">{{ form.plate_number.label }}</label>
+                {{ form.plate_number }}
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small">{{ form.vehicle_type.label }}</label>
+                {{ form.vehicle_type }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">{{ form.vehicle_year.label }}</label>
+                {{ form.vehicle_year }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">{{ form.duration_days.label }}</label>
+                {{ form.duration_days }}
+            </div>
+
+            <!-- Dates -->
+            <div class="col-12 mt-3">
+                <h6 class="border-bottom pb-2 mb-3" style="color: var(--primary);">
+                    <i class="fas fa-calendar ms-1"></i> تاریخ‌ها
+                </h6>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.start_date.label }}</label>
+                {{ form.start_date }}
+                <small class="text-muted">فرمت: 1405/04/29</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.end_date.label }}</label>
+                {{ form.end_date }}
+                <small class="text-muted">فرمت: 1406/04/29</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.issue_date.label }}</label>
+                {{ form.issue_date }}
+                <small class="text-muted">فرمت: 1405/04/29</small>
+            </div>
+
+            <!-- Financial -->
+            <div class="col-12 mt-3">
+                <h6 class="border-bottom pb-2 mb-3" style="color: var(--primary);">
+                    <i class="fas fa-money-bill ms-1"></i> اطلاعات مالی
+                </h6>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.total_premium.label }}</label>
+                {{ form.total_premium }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.total_with_tax.label }}</label>
+                {{ form.total_with_tax }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.vat.label }}</label>
+                {{ form.vat }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.body_coverage.label }}</label>
+                {{ form.body_coverage }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.financial_coverage.label }}</label>
+                {{ form.financial_coverage }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.down_payment.label }}</label>
+                {{ form.down_payment }}
+                <small class="text-muted">مبلغ پیش پرداخت که از کل کسر می‌شود</small>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-primary-custom">
+                <i class="fas fa-save ms-1"></i> ذخیره تغییرات
+            </button>
+            <a href="{% url 'policies:policy_detail' policy.pk %}" class="btn btn-outline-custom">
+                انصراف
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Auto-format date inputs: 14050429 → 1405/04/29
+    document.querySelectorAll('.date-input').forEach(function(input) {
+        input.addEventListener('blur', function() {
+            var val = this.value.replace(/\s/g, '');
+            if (val && !val.includes('/') && val.length === 8) {
+                this.value = val.substring(0, 4) + '/' + val.substring(4, 6) + '/' + val.substring(6, 8);
+            }
+        });
+    });
+</script>
+{% endblock %}

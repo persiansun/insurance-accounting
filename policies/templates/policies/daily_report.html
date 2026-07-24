@@ -1,0 +1,145 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}گزارش روزانه اقساط{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-calendar-day ms-2"></i>گزارش روزانه اقساط</h4>
+        <p class="text-muted">مشاهده اقساط سررسید شده در تاریخ دلخواه</p>
+    </div>
+</div>
+
+<!-- Date Selector -->
+<div class="content-card">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="small text-muted">تاریخ مورد نظر (شمسی)</label>
+            <input type="text" name="date" class="form-control" dir="ltr"
+                   value="{{ date }}" placeholder="1405/04/29">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary-custom w-100">
+                <i class="fas fa-search ms-1"></i> نمایش
+            </button>
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'policies:daily_report' %}" class="btn btn-outline-custom w-100">
+                <i class="fas fa-calendar-day ms-1"></i> امروز
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3">
+    <!-- Due Installments -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-clock ms-2" style="color: var(--info);"></i>اقساط سررسید در تاریخ {{ date }}</h5>
+            </div>
+            {% if due_installments %}
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>بیمه گذار</th>
+                                <th>قسط</th>
+                                <th>مبلغ (ریال)</th>
+                                <th>وضعیت</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inst in due_installments %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'policies:policy_detail' inst.policy.pk %}">
+                                        {{ inst.policy.policyholder|truncatechars:30 }}
+                                    </a>
+                                </td>
+                                <td>{{ inst.installment_number }}</td>
+                                <td class="fw-bold">{{ inst.amount|intcomma }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ inst.status }}">
+                                        {{ inst.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'policies:policy_detail' inst.policy.pk %}"
+                                       class="btn btn-sm btn-outline-custom">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-2">
+                    <strong>جمع:</strong>
+                    {{ due_installments|length }} قسط
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success);"></i>
+                    <p class="mt-2">هیچ قسط سررسیدی در این تاریخ وجود ندارد.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Overdue Installments -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-exclamation-triangle ms-2" style="color: var(--danger);"></i>قسط‌های دیرکرد</h5>
+                <small class="text-muted">همه اقساطی که تاریخ سررسیدشان گذشته</small>
+            </div>
+            {% if overdue_installments %}
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>بیمه گذار</th>
+                                <th>قسط</th>
+                                <th>مبلغ (ریال)</th>
+                                <th>سررسید</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inst in overdue_installments %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'policies:policy_detail' inst.policy.pk %}">
+                                        {{ inst.policy.policyholder|truncatechars:25 }}
+                                    </a>
+                                </td>
+                                <td>{{ inst.installment_number }}</td>
+                                <td class="fw-bold">{{ inst.amount|intcomma }}</td>
+                                <td>
+                                    <span class="status-badge status-overdue">{{ inst.due_date }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'policies:policy_detail' inst.policy.pk %}"
+                                       class="btn btn-sm btn-outline-custom">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success);"></i>
+                    <p class="mt-2">هیچ دیرکردی وجود ندارد. 🎉</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
