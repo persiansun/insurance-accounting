@@ -241,6 +241,7 @@ class Payment(models.Model):
         ('card', 'کارت به کارت'),
         ('check', 'چک'),
         ('wire', 'حواله بانکی'),
+        ('credit', 'پرداخت از اعتبار'),
         ('other', 'سایر'),
     ]
 

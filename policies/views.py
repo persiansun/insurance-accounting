@@ -500,6 +500,43 @@ class AddPaymentView(View):
             )
             return redirect('policies:policy_detail', pk=pk)
 
+        # Check if this is a credit payment
+        is_credit_payment = request.POST.get('payment_method') == 'credit'
+
+        if is_credit_payment:
+            amount = request.POST.get('amount')
+            installment_id = request.POST.get('installment')
+            try:
+                amount_int = int(amount) if amount else 0
+            except (ValueError, TypeError):
+                amount_int = 0
+
+            credit = policy.overpayment_credit or 0
+            if amount_int <= 0 or amount_int > credit:
+                messages.error(request, 'مبلغ نامعتبر یا بیش از اعتبار موجود')
+                return redirect('policies:policy_detail', pk=pk)
+
+            # Record payment using credit
+            inst = Installment.objects.filter(pk=installment_id).first() if installment_id else None
+            Payment.objects.create(
+                policy=policy,
+                installment=inst,
+                amount=amount_int,
+                payment_date=request.POST.get('payment_date', ''),
+                payment_method='credit',
+                notes='پرداخت از اعتبار'
+            )
+
+            # Deduct from credit
+            policy.overpayment_credit = credit - amount_int
+            policy.save(update_fields=['overpayment_credit'])
+
+            messages.success(
+                request,
+                f'✅ مبلغ {amount_int:,} ریال از اعتبار کسر و به قسط اعمال شد'
+            )
+            return redirect('policies:policy_detail', pk=pk)
+
         # Normal installment payment flow
         form = PaymentForm(request.POST, policy_id=policy.pk)
 

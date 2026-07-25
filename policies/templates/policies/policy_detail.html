@@ -410,11 +410,14 @@
                     </div>
                     <div class="col-6">
                         <label class="small text-muted">روش پرداخت</label>
-                        <select name="payment_method" class="form-select form-select-sm" onchange="toggleChequeFields(this.value)">
+                        <select name="payment_method" class="form-select form-select-sm" onchange="toggleChequeFields(this.value); handleCreditPayment(this.value)">
                             <option value="cash">نقدی</option>
                             <option value="card">کارت به کارت</option>
                             <option value="check">چک</option>
                             <option value="wire">حواله بانکی</option>
+                            {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
+                            <option value="credit">پرداخت از اعتبار ({{ policy.overpayment_credit|intcomma }} ریال)</option>
+                            {% endif %}
                             <option value="other">سایر</option>
                         </select>
                     </div>
@@ -663,6 +666,20 @@
         fields.forEach(function(f) {
             f.style.display = method === 'check' ? 'block' : 'none';
         });
+    }
+
+    // Handle credit payment: auto-fill amount and hide extra fields
+    function handleCreditPayment(method) {
+        var amountInput = document.querySelector('input[name="amount"]');
+        var dateInput = document.querySelector('input[name="payment_date"]');
+        var refInput = document.querySelector('input[name="reference_number"]');
+        if (method === 'credit') {
+            var credit = {{ policy.overpayment_credit|default:'0' }};
+            if (amountInput) amountInput.value = credit;
+            if (amountInput) amountInput.readOnly = true;
+        } else {
+            if (amountInput) amountInput.readOnly = false;
+        }
     }
 
     // Auto-toggle on load
