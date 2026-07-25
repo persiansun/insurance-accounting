@@ -49,7 +49,7 @@ class InsurancePolicyAdmin(admin.ModelAdmin):
         }),
         ('اطلاعات تکمیلی', {
             'fields': (
-                'agent_name', 'archive_number', 'contract_number',
+                'agent_name', 'agent_phone', 'archive_number', 'contract_number',
                 'raw_data'
             )
         }),

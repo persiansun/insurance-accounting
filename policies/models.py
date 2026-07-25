@@ -98,6 +98,10 @@ class InsurancePolicy(models.Model):
     agent_name = models.CharField(
         'معرف / نماینده', max_length=255, blank=True, null=True
     )
+    agent_phone = models.CharField(
+        'شماره تماس معرف', max_length=50, blank=True, null=True,
+        help_text='مثال: 09121234567'
+    )
     archive_number = models.CharField(
         'شماره بایگانی', max_length=100, blank=True, null=True
     )

@@ -181,7 +181,7 @@ class PolicyEditForm(forms.ModelForm):
             'total_premium', 'total_with_tax', 'vat',
             'body_coverage', 'financial_coverage', 'vehicle_value',
             'down_payment',
-            'agent_name', 'contract_description', 'status',
+            'agent_name', 'agent_phone', 'contract_description', 'status',
         ]
         widgets = {
             'insurance_type': forms.Select(attrs={'class': 'form-select'}),
@@ -220,6 +220,9 @@ class PolicyEditForm(forms.ModelForm):
                 'placeholder': 'مبلغ پیش پرداخت به ریال'
             }),
             'agent_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'agent_phone': forms.TextInput(attrs={
+                'class': 'form-control', 'dir': 'ltr', 'placeholder': '09121234567'
+            }),
             'contract_description': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -244,6 +247,7 @@ class PolicyEditForm(forms.ModelForm):
             'vehicle_value': 'ارزش وسیله نقلیه (ریال)',
             'down_payment': 'پیش پرداخت (ریال)',
             'agent_name': 'نماینده / معرف',
+            'agent_phone': 'شماره تماس معرف',
             'contract_description': 'شرح قرارداد',
             'status': 'وضعیت',
         }
