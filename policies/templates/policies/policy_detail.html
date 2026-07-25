@@ -378,13 +378,13 @@
                     <div class="col-12">
                         <div class="d-flex gap-2 mb-2">
                             {% if policy.down_payment and policy.down_payment > 0 and not policy.down_payment_paid %}
-                            <label class="btn btn-outline-custom btn-sm active" id="dp_btn" onclick="selectPaymentType('down_payment')">
-                                <input type="radio" name="payment_type" value="down_payment" checked hidden>
+                            <label class="btn btn-outline-custom btn-sm" id="dp_btn" onclick="selectPaymentType('down_payment')">
+                                <input type="radio" name="payment_type" value="down_payment" hidden>
                                 <i class="fas fa-hand-holding-usd ms-1"></i> پیش پرداخت
                             </label>
                             {% endif %}
-                            <label class="btn btn-outline-custom btn-sm" id="inst_btn" onclick="selectPaymentType('installment')">
-                                <input type="radio" name="payment_type" value="installment" hidden>
+                            <label class="btn btn-outline-custom btn-sm active" id="inst_btn" onclick="selectPaymentType('installment')">
+                                <input type="radio" name="payment_type" value="installment" checked hidden>
                                 <i class="fas fa-list ms-1"></i> قسط
                             </label>
                         </div>
@@ -402,17 +402,15 @@
                     </div>
                     <div class="col-6">
                         <label class="small text-muted">مبلغ واریزی (ریال)</label>
-                        <input type="number" name="amount" class="form-control form-control-sm"
-                               dir="ltr" placeholder="مبلغ" required>
+                        <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" placeholder="مبلغ" required>
                     </div>
                     <div class="col-6">
                         <label class="small text-muted">تاریخ واریز</label>
-                        <input type="text" name="payment_date" class="form-control form-control-sm"
-                               dir="ltr" placeholder="1404/05/01" required>
+                        <input type="text" name="payment_date" class="form-control form-control-sm" dir="ltr" placeholder="1404/05/01" required>
                     </div>
                     <div class="col-6">
                         <label class="small text-muted">روش پرداخت</label>
-                        <select name="payment_method" class="form-select form-select-sm">
+                        <select name="payment_method" class="form-select form-select-sm" onchange="toggleChequeFields(this.value)">
                             <option value="cash">نقدی</option>
                             <option value="card">کارت به کارت</option>
                             <option value="check">چک</option>
@@ -420,9 +418,25 @@
                             <option value="other">سایر</option>
                         </select>
                     </div>
-                    <div class="col-6">
-                        <label class="small text-muted">شماره پیگیری</label>
+                    <div class="col-6 cheque-field">
+                        <label class="small text-muted">شماره چک</label>
                         <input type="text" name="reference_number" class="form-control form-control-sm" dir="ltr">
+                    </div>
+                    <div class="col-6 cheque-field">
+                        <label class="small text-muted">تاریخ سررسید چک</label>
+                        <input type="text" name="check_due_date" class="form-control form-control-sm date-input" dir="ltr" placeholder="1405/04/29">
+                    </div>
+                    <div class="col-6 cheque-field">
+                        <label class="small text-muted">نام بانک</label>
+                        <input type="text" name="check_bank_name" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-12 cheque-field">
+                        <label class="small text-muted">وضعیت چک</label>
+                        <select name="check_status" class="form-select form-select-sm">
+                            <option value="pending">در انتظار وصول</option>
+                            <option value="cleared">پاس شده</option>
+                            <option value="returned">برگشت خورده</option>
+                        </select>
                     </div>
                     <div class="col-12">
                         <label class="small text-muted">توضیحات</label>
@@ -450,6 +464,7 @@
                                 <th>مبلغ</th>
                                 <th>تاریخ</th>
                                 <th>روش</th>
+                                <th>وضعیت چک</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -458,6 +473,19 @@
                                 <td class="fw-bold">{{ p.amount|intcomma }}</td>
                                 <td>{{ p.payment_date }}</td>
                                 <td>{{ p.get_payment_method_display }}</td>
+                                <td>
+                                    {% if p.payment_method == 'check' and p.check_status %}
+                                        {% if p.check_status == 'cleared' %}
+                                            <span class="status-badge status-paid">✅ پاس شده</span>
+                                        {% elif p.check_status == 'returned' %}
+                                            <span class="status-badge status-overdue">❌ برگشت</span>
+                                        {% else %}
+                                            <span class="status-badge status-pending">⏳ در انتظار</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -628,6 +656,20 @@
             if (refInput) refInput.placeholder = '';
         }
     }
+
+    // Toggle cheque fields visibility
+    function toggleChequeFields(method) {
+        var fields = document.querySelectorAll('.cheque-field');
+        fields.forEach(function(f) {
+            f.style.display = method === 'check' ? 'block' : 'none';
+        });
+    }
+
+    // Auto-toggle on load
+    document.addEventListener('DOMContentLoaded', function() {
+        var methodSelect = document.querySelector('select[name="payment_method"]');
+        if (methodSelect) toggleChequeFields(methodSelect.value);
+    });
 
     // Auto-select down payment if that's the first option
     document.addEventListener('DOMContentLoaded', function() {

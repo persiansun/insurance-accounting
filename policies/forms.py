@@ -85,7 +85,7 @@ class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
         fields = ['installment', 'amount', 'payment_date', 'payment_method',
-                  'reference_number', 'notes']
+                  'reference_number', 'check_due_date', 'check_bank_name', 'check_status', 'notes']
         widgets = {
             'installment': forms.Select(attrs={'class': 'form-control'}),
             'amount': forms.NumberInput(attrs={
@@ -100,6 +100,16 @@ class PaymentForm(forms.ModelForm):
             'reference_number': forms.TextInput(attrs={
                 'class': 'form-control', 'dir': 'ltr'
             }),
+            'check_due_date': forms.TextInput(attrs={
+                'class': 'form-control date-input', 'dir': 'ltr',
+                'placeholder': '1405/04/29'
+            }),
+            'check_bank_name': forms.TextInput(attrs={
+                'class': 'form-control'
+            }),
+            'check_status': forms.Select(attrs={
+                'class': 'form-select'
+            }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control', 'rows': 3
             }),
@@ -109,7 +119,10 @@ class PaymentForm(forms.ModelForm):
             'amount': 'مبلغ واریزی (ریال)',
             'payment_date': 'تاریخ واریز',
             'payment_method': 'روش پرداخت',
-            'reference_number': 'شماره پیگیری',
+            'reference_number': 'شماره چک / پیگیری',
+            'check_due_date': 'تاریخ سررسید چک',
+            'check_bank_name': 'نام بانک',
+            'check_status': 'وضعیت چک',
             'notes': 'توضیحات',
         }
 

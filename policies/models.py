@@ -268,6 +268,25 @@ class Payment(models.Model):
         help_text='شماره پیگیری یکتا - نمی‌تواند تکراری باشد'
     )
     notes = models.TextField('توضیحات', blank=True, null=True)
+
+    # Cheque-specific fields
+    check_due_date = models.CharField(
+        'تاریخ سررسید چک', max_length=20, blank=True, null=True,
+        help_text="فرمت: 1405/04/29"
+    )
+    check_bank_name = models.CharField(
+        'نام بانک', max_length=200, blank=True, null=True
+    )
+    CHECK_STATUS_CHOICES = [
+        ('pending', 'در انتظار وصول'),
+        ('cleared', 'پاس شده'),
+        ('returned', 'برگشت خورده'),
+    ]
+    check_status = models.CharField(
+        'وضعیت چک', max_length=20, choices=CHECK_STATUS_CHOICES,
+        blank=True, null=True, default=None,
+        help_text='وضعیت وصول چک'
+    )
     created_at = models.DateTimeField('تاریخ ثبت', auto_now_add=True)
 
     class Meta:
@@ -286,6 +305,12 @@ class Payment(models.Model):
 
         is_new = self.pk is None
         super().save(*args, **kwargs)
+
+        # When cheque is marked as cleared, mark installment as paid
+        if not is_new and self.payment_method == 'check' and self.check_status == 'cleared' and self.installment:
+            self.installment.status = 'paid'
+            self.installment.save(update_fields=['status'])
+            return
 
         if is_new and self.installment:
             with transaction.atomic():
