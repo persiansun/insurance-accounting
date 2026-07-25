@@ -180,6 +180,12 @@ class InsurancePolicy(models.Model):
         """Total overpayment credit available on this policy"""
         return self.overpayment_credit or 0
 
+    @property
+    def total_endorsements(self):
+        """Total amount from all endorsements"""
+        total = self.endorsements.aggregate(total=models.Sum('amount'))
+        return total['total'] or 0
+
 
 class Installment(models.Model):
     """Installment plan for each policy"""
@@ -391,24 +397,21 @@ class Endorsement(models.Model):
                 self._redistribute_installments()
 
     def _redistribute_installments(self):
-        """Add the endorsement amount proportionally to unpaid installments"""
-        unpaid = self.policy.installments.filter(
-            status__in=['pending', 'overdue', 'partial']
-        ).order_by('installment_number')
+        """Create a new installment for the endorsement amount instead of redistributing"""
+        # Find the highest installment number for this policy
+        last_inst = self.policy.installments.order_by('-installment_number').first()
+        next_number = (last_inst.installment_number + 1) if last_inst else 1
 
-        if not unpaid.exists():
-            return
-
-        additional_per_installment = self.amount // unpaid.count()
-        remainder = self.amount - (additional_per_installment * unpaid.count())
-
-        for i, inst in enumerate(unpaid):
-            extra = additional_per_installment + (1 if i == 0 else 0)  # remainder goes to first
-            inst.amount += extra
-            note = f'[الحاقیه {self.reason}: +{extra:,} ریال]'
-            old_notes = inst.notes or ''
-            inst.notes = f'{note}\n{old_notes}' if old_notes else note
-            inst.save(update_fields=['amount', 'notes'])
+        # Create a new installment for the endorsement
+        new_inst = Installment.objects.create(
+            policy=self.policy,
+            installment_number=next_number,
+            amount=self.amount,
+            due_date=self.date or self.policy.end_date,
+            status='pending',
+            notes=f'الحاقیه: {self.reason}'
+        )
+        return new_inst
 
 
 class GuaranteeCheck(models.Model):

@@ -175,6 +175,12 @@
                 <small class="text-muted">پیش پرداخت</small>
             </div>
             {% endif %}
+            {% if policy.total_endorsements %}
+            <div class="col-3">
+                <div class="fw-bold" style="color: #1565c0; font-size: 1.1rem;">{{ policy.total_endorsements|intcomma }}</div>
+                <small class="text-muted">الحاقیه</small>
+            </div>
+            {% endif %}
             <div class="col-3">
                 <div class="fw-bold" style="color: var(--info); font-size: 1.1rem;">{{ total_installment_amount|intcomma }}</div>
                 <small class="text-muted">مجموع اقساط</small>
