@@ -309,6 +309,10 @@ class PolicyDetailView(View):
 
         payments = policy.payments.all().order_by('-created_at')[:20]
 
+        # Calculate total remaining including down payment
+        total_policy_amount = policy.total_with_tax or 0
+        grand_remaining = max(0, total_policy_amount - paid_amount)
+
         # Forms
         installment_form = InstallmentGenerateForm(
             initial={
@@ -331,6 +335,7 @@ class PolicyDetailView(View):
             'total_installment_amount': total_installment_amount,
             'paid_amount': paid_amount,
             'remaining': remaining,
+            'grand_remaining': grand_remaining,
             'payments': payments,
             'installment_form': installment_form,
             'payment_form': payment_form,

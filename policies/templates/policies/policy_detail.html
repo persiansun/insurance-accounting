@@ -183,6 +183,10 @@
                 <div class="fw-bold" style="color: var(--success); font-size: 1.1rem;">{{ paid_amount|intcomma }}</div>
                 <small class="text-muted">پرداخت شده</small>
             </div>
+            <div class="col-3">
+                <div class="fw-bold" style="color: var(--danger); font-size: 1.1rem;">{{ grand_remaining|intcomma }}</div>
+                <small class="text-muted">مانده</small>
+            </div>
         </div>
         {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
         <div class="mt-2 p-2 rounded" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
