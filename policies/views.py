@@ -460,6 +460,47 @@ class AddPaymentView(View):
 
     def post(self, request, pk):
         policy = get_object_or_404(InsurancePolicy, pk=pk)
+
+        # Check if this is a down payment
+        is_down_payment = request.POST.get('payment_type') == 'down_payment'
+
+        if is_down_payment:
+            amount = request.POST.get('amount')
+            payment_date = request.POST.get('payment_date')
+            method = request.POST.get('payment_method', 'cash')
+            ref = request.POST.get('reference_number', '')
+
+            try:
+                amount_int = int(amount) if amount else 0
+            except (ValueError, TypeError):
+                amount_int = 0
+
+            if amount_int <= 0:
+                messages.error(request, 'مبلغ نامعتبر است')
+                return redirect('policies:policy_detail', pk=pk)
+
+            # Mark down payment as paid
+            policy.down_payment_paid = True
+            policy.down_payment_date = payment_date
+            policy.save(update_fields=['down_payment_paid', 'down_payment_date'])
+
+            # Also create a payment record for the down payment
+            Payment.objects.create(
+                policy=policy,
+                amount=amount_int,
+                payment_date=payment_date,
+                payment_method=method,
+                reference_number=ref,
+                notes='پیش پرداخت'
+            )
+
+            messages.success(
+                request,
+                f'✅ پیش پرداخت {amount_int:,} ریال ثبت شد'
+            )
+            return redirect('policies:policy_detail', pk=pk)
+
+        # Normal installment payment flow
         form = PaymentForm(request.POST, policy_id=policy.pk)
 
         if form.is_valid():

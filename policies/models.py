@@ -119,6 +119,13 @@ class InsurancePolicy(models.Model):
         'پیش پرداخت (ریال)', blank=True, null=True, default=0,
         help_text='مبلغ پیش پرداخت که از کل کسر و باقی‌مانده قسط‌بندی می‌شود'
     )
+    down_payment_paid = models.BooleanField(
+        'پیش پرداخت پرداخت شد؟', default=False
+    )
+    down_payment_date = models.CharField(
+        'تاریخ پرداخت پیش پرداخت', max_length=20, blank=True, null=True,
+        help_text="فرمت: 1405/04/29"
+    )
 
     # Extra raw data (full Excel row as JSON)
     raw_data = models.JSONField('داده خام', blank=True, null=True)
