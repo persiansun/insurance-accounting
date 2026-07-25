@@ -1,6 +1,6 @@
 from django.contrib import admin
-from django.utils.html import format_html
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck
+from django.utils.html import format_html, mark_safe
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement
 
 
 @admin.register(InsuranceType)
@@ -79,7 +79,7 @@ class InsurancePolicyAdmin(admin.ModelAdmin):
         total = obj.installments.count()
         paid = obj.installments.filter(status='paid').count()
         if total == 0:
-            return format_html('<span style="color: #6c757d;">بدون قسط</span>')
+            return mark_safe('<span style="color: #6c757d;">بدون قسط</span>')
         color = 'green' if paid == total else ('orange' if paid > 0 else 'red')
         return format_html(
             '<span style="color: {};">{}/{} پرداخت</span>',
@@ -101,7 +101,7 @@ class InstallmentAdmin(admin.ModelAdmin):
     def policy_link(self, obj):
         url = f'/admin/policies/insurancepolicy/{obj.policy.pk}/change/'
         name = obj.policy.policyholder or '-'
-        return format_html(f'<a href="{url}">{name[:30]}</a>')
+        return mark_safe(f'<a href="{url}">{name[:30]}</a>')
     policy_link.short_description = 'بیمه گذار'
     policy_link.admin_order_field = 'policy__policyholder'
 
@@ -137,7 +137,7 @@ class PaymentAdmin(admin.ModelAdmin):
     def policy_link(self, obj):
         url = f'/admin/policies/insurancepolicy/{obj.policy.pk}/change/'
         name = obj.policy.policyholder or '-'
-        return format_html(f'<a href="{url}">{name[:30]}</a>')
+        return mark_safe(f'<a href="{url}">{name[:30]}</a>')
     policy_link.short_description = 'بیمه گذار'
 
     def amount_display(self, obj):
@@ -153,7 +153,7 @@ class GuaranteeCheckAdmin(admin.ModelAdmin):
 
     def policy_link(self, obj):
         url = f'/admin/policies/insurancepolicy/{obj.policy.pk}/change/'
-        return format_html(f'<a href="{url}">{obj.policy.policyholder[:30]}</a>')
+        return mark_safe(f'<a href="{url}">{obj.policy.policyholder[:30]}</a>')
     policy_link.short_description = 'بیمه گذار'
 
     def amount_display(self, obj):
@@ -162,5 +162,32 @@ class GuaranteeCheckAdmin(admin.ModelAdmin):
 
     def status_colored(self, obj):
         colors = {'pending': '#0d6efd', 'cleared': '#2e7d32', 'returned': '#c62828'}
-        return format_html(f'<span style="color: {colors.get(obj.status, "black")};">{obj.get_status_display()}</span>')
+        return mark_safe(f'<span style="color: {colors.get(obj.status, "black")};">{obj.get_status_display()}</span>')
     status_colored.short_description = 'وضعیت'
+
+
+@admin.register(Endorsement)
+class EndorsementAdmin(admin.ModelAdmin):
+    list_display = ['policy_link', 'amount_display', 'reason_short', 'date', 'previous_total_display', 'new_total_display', 'created_at']
+    list_filter = ['date']
+    search_fields = ['policy__policyholder', 'reason']
+
+    def policy_link(self, obj):
+        return mark_safe(f'<a href="/admin/policies/insurancepolicy/{obj.policy.pk}/change/">{obj.policy.policyholder[:30]}</a>')
+    policy_link.short_description = 'بیمه گذار'
+
+    def amount_display(self, obj):
+        return f'{obj.amount:,}'
+    amount_display.short_description = 'مبلغ الحاقیه'
+
+    def reason_short(self, obj):
+        return obj.reason[:40] + '...' if len(obj.reason) > 40 else obj.reason
+    reason_short.short_description = 'دلیل'
+
+    def previous_total_display(self, obj):
+        return f'{obj.previous_total:,}'
+    previous_total_display.short_description = 'قبل'
+
+    def new_total_display(self, obj):
+        return f'{obj.new_total:,}'
+    new_total_display.short_description = 'بعد'

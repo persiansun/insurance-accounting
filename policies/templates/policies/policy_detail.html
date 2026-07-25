@@ -430,6 +430,64 @@
             {% endif %}
         </div>
 
+        <!-- Endorsements Section -->
+        <div class="content-card mt-3">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-plus-circle ms-2" style="color: #1565c0;"></i>الحاقیه‌ها</h5>
+                <small class="text-muted">افزایش مبلغ بیمه به دلیل تغییر دیه و ...</small>
+            </div>
+            <form method="POST" action="{% url 'policies:add_endorsement' policy.pk %}" class="row g-2 mb-3 p-2" style="background: #e3f2fd; border-radius: 8px;">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="small text-muted">مبلغ الحاقیه (ریال)</label>
+                    <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" placeholder="مبلغ اضافه شده" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted">دلیل</label>
+                    <input type="text" name="reason" class="form-control form-control-sm" value="تغییر دیه" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted">تاریخ</label>
+                    <input type="text" name="date" class="form-control form-control-sm date-input" dir="ltr" placeholder="1405/04/29" required>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm w-100" style="background: #1565c0; color: white;">
+                        <i class="fas fa-plus ms-1"></i> ثبت الحاقیه
+                    </button>
+                </div>
+            </form>
+            {% if endorsements %}
+                <div class="table-responsive">
+                    <table class="table table-custom table-sm">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>مبلغ (ریال)</th>
+                                <th>دلیل</th>
+                                <th>تاریخ</th>
+                                <th>مبلغ قبل</th>
+                                <th>مبلغ بعد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in endorsements %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="fw-bold" style="color: #1565c0;">+{{ e.amount|intcomma }}</td>
+                                <td><small>{{ e.reason|truncatechars:30 }}</small></td>
+                                <td>{{ e.date }}</td>
+                                <td><small class="text-muted">{{ e.previous_total|intcomma }}</small></td>
+                                <td class="fw-bold">{{ e.new_total|intcomma }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted small text-center py-2">هیچ الحاقیه‌ای ثبت نشده است.</p>
+            {% endif %}
+        </div>
+
         <!-- Guarantee Checks Section -->
         <div class="content-card mt-3">
             <div class="card-header-custom">

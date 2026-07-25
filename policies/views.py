@@ -9,10 +9,10 @@ from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement
 from .forms import (
     ExcelUploadForm, InstallmentGenerateForm,
-    PaymentForm, InstallmentEditForm, PolicyEditForm, GuaranteeCheckForm
+    PaymentForm, InstallmentEditForm, PolicyEditForm, GuaranteeCheckForm, EndorsementForm
 )
 from .utils.excel_reader import parse_excel, preview_excel
 
@@ -322,6 +322,8 @@ class PolicyDetailView(View):
         payment_form = PaymentForm(policy_id=policy.pk)
         guarantee_form = GuaranteeCheckForm()
         guarantee_checks = policy.guarantee_checks.all().order_by('-created_at')
+        endorsement_form = EndorsementForm()
+        endorsements = policy.endorsements.all().order_by('-created_at')
 
         context = {
             'policy': policy,
@@ -334,6 +336,8 @@ class PolicyDetailView(View):
             'payment_form': payment_form,
             'guarantee_form': guarantee_form,
             'guarantee_checks': guarantee_checks,
+            'endorsement_form': endorsement_form,
+            'endorsements': endorsements,
             'section': 'policies',
         }
         return render(request, 'policies/policy_detail.html', context)
@@ -534,6 +538,31 @@ class DeleteGuaranteeCheckView(View):
         check.delete()
         messages.success(request, 'چک ضمانت حذف شد')
         return redirect('policies:policy_detail', pk=policy_pk)
+
+
+class AddEndorsementView(View):
+    """Add an endorsement (الحاقیه) to a policy"""
+
+    def post(self, request, pk):
+        policy = get_object_or_404(InsurancePolicy, pk=pk)
+        form = EndorsementForm(request.POST)
+        if form.is_valid():
+            endorsement = form.save(commit=False)
+            endorsement.policy = policy
+            try:
+                endorsement.save()  # This auto-updates totals and installments
+                messages.success(
+                    request,
+                    f'✅ الحاقیه به مبلغ {endorsement.amount:,} ریال ثبت شد. '
+                    f'اقساط باقی‌مانده به‌روزرسانی شد.'
+                )
+            except Exception as e:
+                messages.error(request, f'خطا در ثبت الحاقیه: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
+        return redirect('policies:policy_detail', pk=pk)
 
 
 class EditInstallmentView(View):

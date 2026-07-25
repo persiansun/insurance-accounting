@@ -315,6 +315,71 @@ class Payment(models.Model):
             self.installment.save(update_fields=['status'])
 
 
+class Endorsement(models.Model):
+    """الحاقیه —增加 مبلغ بیمه به دلیل تغییر دیه و ..."""
+    policy = models.ForeignKey(
+        InsurancePolicy, on_delete=models.CASCADE,
+        related_name='endorsements', verbose_name='بیمه نامه'
+    )
+    amount = models.BigIntegerField('مبلغ الحاقیه (ریال)')
+    reason = models.CharField('دلیل الحاقیه', max_length=500,
+                              default='تغییر دیه',
+                              help_text='مثال: تغییر دیه سال ۱۴۰۵')
+    date = models.CharField('تاریخ ثبت', max_length=20,
+                            help_text="فرمت: 1405/04/29")
+    previous_total = models.BigIntegerField('مبلغ کل قبل از الحاقیه')
+    new_total = models.BigIntegerField('مبلغ کل بعد از الحاقیه')
+    created_at = models.DateTimeField('تاریخ ثبت', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'الحاقیه'
+        verbose_name_plural = 'الحاقیه‌ها'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'الحاقیه {self.amount:,} ریال - {self.reason[:30]}'
+
+    def save(self, *args, **kwargs):
+        """Auto-calculate totals and redistribute remaining installments"""
+        from django.db import transaction
+
+        is_new = self.pk is None
+        with transaction.atomic():
+            if is_new:
+                # Record previous total
+                self.previous_total = self.policy.total_with_tax or 0
+                # Update policy total
+                self.policy.total_with_tax = (self.policy.total_with_tax or 0) + self.amount
+                self.new_total = self.policy.total_with_tax
+                self.policy.save(update_fields=['total_with_tax'])
+
+            super().save(*args, **kwargs)
+
+            if is_new:
+                # Redistribute the additional amount across unpaid installments
+                self._redistribute_installments()
+
+    def _redistribute_installments(self):
+        """Add the endorsement amount proportionally to unpaid installments"""
+        unpaid = self.policy.installments.filter(
+            status__in=['pending', 'overdue', 'partial']
+        ).order_by('installment_number')
+
+        if not unpaid.exists():
+            return
+
+        additional_per_installment = self.amount // unpaid.count()
+        remainder = self.amount - (additional_per_installment * unpaid.count())
+
+        for i, inst in enumerate(unpaid):
+            extra = additional_per_installment + (1 if i == 0 else 0)  # remainder goes to first
+            inst.amount += extra
+            note = f'[الحاقیه {self.reason}: +{extra:,} ریال]'
+            old_notes = inst.notes or ''
+            inst.notes = f'{note}\n{old_notes}' if old_notes else note
+            inst.save(update_fields=['amount', 'notes'])
+
+
 class GuaranteeCheck(models.Model):
     """Cheque received as guarantee for installment payment"""
     STATUS_CHOICES = [

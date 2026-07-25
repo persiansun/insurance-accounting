@@ -16,6 +16,7 @@ urlpatterns = [
     path('policies/<int:pk>/payments/add/', views.AddPaymentView.as_view(), name='add_payment'),
     path('policies/<int:pk>/guarantee/add/', views.AddGuaranteeCheckView.as_view(), name='add_guarantee_check'),
     path('guarantee/<int:pk>/delete/', views.DeleteGuaranteeCheckView.as_view(), name='delete_guarantee_check'),
+    path('policies/<int:pk>/endorsement/add/', views.AddEndorsementView.as_view(), name='add_endorsement'),
     path('installments/<int:pk>/edit/', views.EditInstallmentView.as_view(), name='edit_installment'),
     path('installments/<int:pk>/delete/', views.DeleteInstallmentView.as_view(), name='delete_installment'),
     path('reports/', views.ReportsView.as_view(), name='reports'),

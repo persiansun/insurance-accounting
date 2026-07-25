@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import InsurancePolicy, Installment, Payment, GuaranteeCheck
+from .models import InsurancePolicy, Installment, Payment, GuaranteeCheck, Endorsement
 import jdatetime
 
 
@@ -306,4 +306,28 @@ class GuaranteeCheckForm(forms.ModelForm):
             'amount': 'مبلغ چک (ریال)',
             'due_date': 'تاریخ سررسید',
             'notes': 'توضیحات',
+        }
+
+
+class EndorsementForm(forms.ModelForm):
+    """Form for adding an endorsement (الحاقیه)"""
+
+    class Meta:
+        model = Endorsement
+        fields = ['amount', 'reason', 'date']
+        widgets = {
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control', 'dir': 'ltr', 'placeholder': 'مبلغ اضافه شده به ریال'
+            }),
+            'reason': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'مثال: تغییر دیه سال ۱۴۰۵'
+            }),
+            'date': forms.TextInput(attrs={
+                'class': 'form-control date-input', 'dir': 'ltr', 'placeholder': '1405/04/29'
+            }),
+        }
+        labels = {
+            'amount': 'مبلغ الحاقیه (ریال)',
+            'reason': 'دلیل الحاقیه',
+            'date': 'تاریخ ثبت',
         }
