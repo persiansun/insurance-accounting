@@ -242,7 +242,8 @@
                     <label class="small text-muted">پیش پرداخت (ریال)</label>
                     <input type="number" name="down_payment_amount" class="form-control form-control-sm"
                            id="id_down_payment" dir="ltr"
-                           value="{{ policy.down_payment|default:'0' }}" min="0">
+                           value="{{ policy.down_payment|default:'0' }}" min="0"
+                           oninput="calcAmount()">
                 </div>
                 <div class="col-md-2">
                     <label class="small text-muted">تعداد اقساط</label>
@@ -699,12 +700,14 @@
     // Calculate suggested installment amount
     function calcAmount() {
         var count = document.getElementById('id_installment_count').value;
-        var total = {{ policy.amount_after_downpayment|default:'0' }};
+        var downPayment = parseInt(document.getElementById('id_down_payment').value) || 0;
+        var total = {{ policy.total_with_tax|default:'0' }};
+        var remaining = Math.max(0, total - downPayment);
         if (count > 0) {
-            var perInstallment = Math.floor(total / count);
+            var perInstallment = Math.floor(remaining / count);
             document.getElementById('id_amount_per_installment').value = perInstallment;
             document.getElementById('suggested_amount').textContent =
-                'پیشنهادی: ' + perInstallment.toLocaleString() + ' ریال';
+                'مبلغ کل: ' + total.toLocaleString() + ' | پس از کسر پیش پرداخت: ' + remaining.toLocaleString() + ' ریال';
         }
     }
 
