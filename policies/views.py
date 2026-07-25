@@ -648,6 +648,41 @@ class AddEndorsementView(View):
         return redirect('policies:policy_detail', pk=pk)
 
 
+class EditEndorsementView(View):
+    """Edit endorsement amount"""
+
+    def post(self, request, pk):
+        endorsement = get_object_or_404(Endorsement, pk=pk)
+        new_amount = request.POST.get('amount')
+        try:
+            new_amount_int = int(new_amount) if new_amount else 0
+        except (ValueError, TypeError):
+            new_amount_int = 0
+
+        if new_amount_int <= 0:
+            messages.error(request, 'مبلغ نامعتبر است')
+            return redirect('policies:policy_detail', pk=endorsement.policy.pk)
+
+        diff = new_amount_int - endorsement.amount
+        old_amount = endorsement.amount
+        endorsement.amount = new_amount_int
+        endorsement.save(update_fields=['amount'])
+
+        # Also update the related installment
+        inst_note = f'الحاقیه: {endorsement.reason}'
+        related_inst = endorsement.policy.installments.filter(notes__contains=inst_note).first()
+        if related_inst:
+            related_inst.amount = new_amount_int
+            related_inst.notes = f'الحاقیه: {endorsement.reason} (ویرایش: {old_amount:,} → {new_amount_int:,})'
+            related_inst.save(update_fields=['amount', 'notes'])
+
+        messages.success(
+            request,
+            f'✅ مبلغ الحاقیه از {old_amount:,} به {new_amount_int:,} ریال تغییر کرد'
+        )
+        return redirect('policies:policy_detail', pk=endorsement.policy.pk)
+
+
 class EditInstallmentView(View):
     """Edit a single installment"""
 

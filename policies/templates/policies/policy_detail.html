@@ -489,13 +489,23 @@
                     {% if endorsements %}
                     <div class="table-responsive">
                         <table class="table table-custom table-sm">
-                            <thead><tr><th>#</th><th>مبلغ</th><th>دلیل</th><th>تاریخ</th><th>مبلغ قبل</th><th>مبلغ بعد</th></tr></thead>
+                            <thead><tr><th>#</th><th>مبلغ</th><th>دلیل</th><th>تاریخ</th><th>مبلغ قبل</th><th>مبلغ بعد</th><th></th></tr></thead>
                             <tbody>
                                 {% for e in endorsements %}
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
-                                    <td class="fw-bold" style="color: #1565c0;">+{{ e.amount|intcomma }}</td>
-                                    <td><small>{{ e.reason|truncatechars:30 }}</small></td>
+                                    <td class="fw-bold" style="color: #1565c0;">
+                                        <span id="endorsement-amount-{{ e.pk }}">{{ e.amount|intcomma }}</span>
+                                        <form method="POST" action="{% url 'policies:edit_endorsement' e.pk %}" id="endorsement-edit-form-{{ e.pk }}" style="display:none;">
+                                            {% csrf_token %}
+                                            <input type="number" name="amount" class="form-control form-control-sm d-inline" style="width:120px;" value="{{ e.amount }}" dir="ltr">
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-custom" onclick="toggleEndorsementEdit({{ e.pk }})"><i class="fas fa-times"></i></button>
+                                        </form>
+                                    </td>
+                                    <td><small>{{ e.reason|truncatechars:30 }}<br>
+                                        <a href="javascript:void(0)" onclick="toggleEndorsementEdit({{ e.pk }})" class="text-muted small">✏️ ویرایش</a>
+                                    </small></td>
                                     <td>{{ e.date }}</td>
                                     <td><small class="text-muted">{{ e.previous_total|intcomma }}</small></td>
                                     <td class="fw-bold">{{ e.new_total|intcomma }}</td>
@@ -680,6 +690,19 @@
             form.style.display = 'block';
         } else {
             form.style.display = 'none';
+        }
+    }
+
+    // Toggle endorsement edit form
+    function toggleEndorsementEdit(pk) {
+        var form = document.getElementById('endorsement-edit-form-' + pk);
+        var span = document.getElementById('endorsement-amount-' + pk);
+        if (form.style.display === 'none') {
+            form.style.display = 'inline';
+            if (span) span.style.display = 'none';
+        } else {
+            form.style.display = 'none';
+            if (span) span.style.display = 'inline';
         }
     }
 
