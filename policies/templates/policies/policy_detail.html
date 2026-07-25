@@ -116,12 +116,20 @@
             <p class="mb-0">{{ policy.financial_coverage|default:'0'|intcomma }}</p>
         </div>
         <div class="col-md-3">
-            <label class="text-muted small">نماینده / معرف</label>
+            <label class="text-muted small">نماینده فروش</label>
             <p class="mb-0">{{ policy.agent_name|default:'-' }}</p>
         </div>
         <div class="col-md-3">
-            <label class="text-muted small">شماره تماس معرف</label>
+            <label class="text-muted small">شماره تماس نماینده</label>
             <p class="mb-0 fw-bold" dir="ltr" style="color: #1565c0;">{{ policy.agent_phone|default:'-' }}</p>
+        </div>
+        <div class="col-md-3">
+            <label class="text-muted small">معرف / ضامن</label>
+            <p class="mb-0">{{ policy.introducer_name|default:'-' }}</p>
+        </div>
+        <div class="col-md-3">
+            <label class="text-muted small">شماره تماس معرف</label>
+            <p class="mb-0 fw-bold" dir="ltr" style="color: #2e7d32;">{{ policy.introducer_phone|default:'-' }}</p>
         </div>
         {% if policy.contract_description %}
         <div class="col-12">

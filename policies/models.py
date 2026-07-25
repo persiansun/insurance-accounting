@@ -94,14 +94,24 @@ class InsurancePolicy(models.Model):
         help_text='مخصوص بیمه بدنه'
     )
 
-    # Agent info
+    # Agent info (نماینده فروش)
     agent_name = models.CharField(
-        'معرف / نماینده', max_length=255, blank=True, null=True
+        'نماینده فروش', max_length=255, blank=True, null=True
     )
     agent_phone = models.CharField(
+        'شماره تماس نماینده', max_length=50, blank=True, null=True,
+        help_text='مثال: 09121234567'
+    )
+
+    # Introducer / Guarantor (معرف / ضامن)
+    introducer_name = models.CharField(
+        'معرف / ضامن', max_length=255, blank=True, null=True
+    )
+    introducer_phone = models.CharField(
         'شماره تماس معرف', max_length=50, blank=True, null=True,
         help_text='مثال: 09121234567'
     )
+
     archive_number = models.CharField(
         'شماره بایگانی', max_length=100, blank=True, null=True
     )

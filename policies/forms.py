@@ -181,7 +181,8 @@ class PolicyEditForm(forms.ModelForm):
             'total_premium', 'total_with_tax', 'vat',
             'body_coverage', 'financial_coverage', 'vehicle_value',
             'down_payment',
-            'agent_name', 'agent_phone', 'contract_description', 'status',
+            'agent_name', 'agent_phone', 'introducer_name', 'introducer_phone',
+            'contract_description', 'status',
         ]
         widgets = {
             'insurance_type': forms.Select(attrs={'class': 'form-select'}),
@@ -223,6 +224,10 @@ class PolicyEditForm(forms.ModelForm):
             'agent_phone': forms.TextInput(attrs={
                 'class': 'form-control', 'dir': 'ltr', 'placeholder': '09121234567'
             }),
+            'introducer_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'introducer_phone': forms.TextInput(attrs={
+                'class': 'form-control', 'dir': 'ltr', 'placeholder': '09121234567'
+            }),
             'contract_description': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -246,8 +251,10 @@ class PolicyEditForm(forms.ModelForm):
             'financial_coverage': 'پوشش مالی (میلیون ریال)',
             'vehicle_value': 'ارزش وسیله نقلیه (ریال)',
             'down_payment': 'پیش پرداخت (ریال)',
-            'agent_name': 'نماینده / معرف',
-            'agent_phone': 'شماره تماس معرف',
+            'agent_name': 'نماینده فروش',
+            'agent_phone': 'شماره تماس نماینده',
+            'introducer_name': 'معرف / ضامن',
+            'introducer_phone': 'شماره تماس معرف',
             'contract_description': 'شرح قرارداد',
             'status': 'وضعیت',
         }

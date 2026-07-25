@@ -49,7 +49,8 @@ class InsurancePolicyAdmin(admin.ModelAdmin):
         }),
         ('اطلاعات تکمیلی', {
             'fields': (
-                'agent_name', 'agent_phone', 'archive_number', 'contract_number',
+                'agent_name', 'agent_phone', 'introducer_name', 'introducer_phone',
+                'archive_number', 'contract_number',
                 'raw_data'
             )
         }),
