@@ -159,33 +159,31 @@
     <div class="card-header-custom">
         <h5><i class="fas fa-chart-line ms-2" style="color: var(--success);"></i>وضعیت پرداخت</h5>
     </div>
-    {% with total=total_installment_amount %}
-    {% if total > 0 %}
-        {% with percent=paid_amount|floatformat:0 %}
+    {% with grand_total=policy.total_with_tax|default:0 dp=policy.down_payment|default:0 %}
+    {% if grand_total > 0 %}
         <div class="row g-3 text-center mb-3">
-            <div class="col-4">
-                <div class="fw-bold" style="color: var(--info); font-size: 1.2rem;">{{ total|intcomma }}</div>
-                <small class="text-muted">مبلغ کل اقساط</small>
+            <div class="col-3">
+                <div class="fw-bold" style="color: var(--primary); font-size: 1.1rem;">{{ grand_total|intcomma }}</div>
+                <small class="text-muted">مبلغ کل بیمه</small>
             </div>
-            <div class="col-4">
-                <div class="fw-bold" style="color: var(--success); font-size: 1.2rem;">{{ paid_amount|intcomma }}</div>
+            {% if dp > 0 %}
+            <div class="col-3">
+                <div class="fw-bold" style="color: #e65100; font-size: 1.1rem;">
+                    {{ dp|intcomma }}
+                    {% if policy.down_payment_paid %}<i class="fas fa-check-circle" style="color: var(--success); font-size: 0.8rem;"></i>{% endif %}
+                </div>
+                <small class="text-muted">پیش پرداخت</small>
+            </div>
+            {% endif %}
+            <div class="col-3">
+                <div class="fw-bold" style="color: var(--info); font-size: 1.1rem;">{{ total_installment_amount|intcomma }}</div>
+                <small class="text-muted">مجموع اقساط</small>
+            </div>
+            <div class="col-3">
+                <div class="fw-bold" style="color: var(--success); font-size: 1.1rem;">{{ paid_amount|intcomma }}</div>
                 <small class="text-muted">پرداخت شده</small>
             </div>
-            <div class="col-4">
-                <div class="fw-bold" style="color: var(--danger); font-size: 1.2rem;">{{ remaining|intcomma }}</div>
-                <small class="text-muted">باقیمانده</small>
-            </div>
         </div>
-        {% if paid_amount and total %}
-        <div class="progress-custom mt-2">
-            <div class="progress-bar bg-success" role="progressbar"
-                 style="width: {% widthratio paid_amount total 100 %}%"
-                 aria-valuenow="{% widthratio paid_amount total 100 %}" aria-valuemin="0" aria-valuemax="100">
-            </div>
-        </div>
-        <small class="text-muted">{% widthratio paid_amount total 100 %}% از اقساط پرداخت شده</small>
-        {% endif %}
-        {% endwith %}
         {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
         <div class="mt-2 p-2 rounded" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
             <small>
