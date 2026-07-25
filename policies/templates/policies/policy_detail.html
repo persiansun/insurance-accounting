@@ -222,425 +222,353 @@
 </div>
 
 <div class="row g-3">
-    <!-- Installments Section -->
-    <div class="col-lg-7">
-        <div class="content-card">
-            <div class="card-header-custom">
-                <h5><i class="fas fa-list-ol ms-2" style="color: var(--info);"></i>مدیریت اقساط</h5>
-            </div>
-
-            <!-- Generate Installments Form -->
-            {% if installments|length == 0 %}
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle ms-1"></i>
-                برای این بیمه نامه هنوز قسطی تعریف نشده. فرم زیر را پر کنید تا اقساط به صورت خودکار ایجاد شود.
-            </div>
-            {% endif %}
-
-            <form method="POST" action="{% url 'policies:generate_installments' policy.pk %}"
-                  class="row g-2 mb-4 p-3" style="background: var(--gray-bg); border-radius: 10px;">
-                {% csrf_token %}
-                <div class="col-md-2">
-                    <label class="small text-muted">پیش پرداخت (ریال)</label>
-                    <input type="number" name="down_payment_amount" class="form-control form-control-sm"
-                           id="id_down_payment" dir="ltr"
-                           value="{{ policy.down_payment|default:'0' }}" min="0"
-                           oninput="calcAmount()">
-                </div>
-                <div class="col-md-2">
-                    <label class="small text-muted">تعداد اقساط</label>
-                    <input type="number" name="count" class="form-control form-control-sm"
-                           id="id_installment_count" min="1" max="60"
-                           oninput="calcAmount()" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="small text-muted">مبلغ هر قسط (ریال)</label>
-                    <input type="number" name="amount_per_installment" class="form-control form-control-sm"
-                           id="id_amount_per_installment" dir="ltr"
-                           value="{% if policy.amount_after_downpayment %}{{ policy.amount_after_downpayment|floatformat:'0' }}{% else %}0{% endif %}" required>
-                    <small class="text-muted" id="suggested_amount"></small>
-                </div>
-                <div class="col-md-2">
-                    <label class="small text-muted">تاریخ شروع</label>
-                    <input type="text" name="start_date" class="form-control form-control-sm"
-                           value="{{ policy.start_date|default:'' }}" dir="ltr" required>
-                </div>
-                <div class="col-md-2">
-                    <label class="small text-muted">فاصله اقساط</label>
-                    <select name="interval" class="form-select form-select-sm">
-                        <option value="30">ماهانه (۳۰ روز)</option>
-                        <option value="60">دو ماهه (۶۰ روز)</option>
-                    </select>
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary-custom btn-sm w-100">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </form>
-
-            <!-- Installments List -->
-            {% if installments %}
-                <div class="table-responsive">
-                    <table class="table table-custom table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>مبلغ (ریال)</th>
-                                <th>تاریخ سررسید</th>
-                                <th>وضعیت</th>
-                                <th>عملیات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for inst in installments %}
-                            <tr>
-                                <td>قسط {{ inst.installment_number }}</td>
-                                <td class="fw-bold">{{ inst.amount|intcomma }}</td>
-                                <td>{{ inst.due_date }}</td>
-                                <td>
-                                    <span class="status-badge status-{{ inst.status }}">
-                                        {{ inst.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-1">
-                                        <!-- Edit button triggers inline form -->
-                                        <button type="button" class="btn btn-sm btn-outline-custom"
-                                                onclick="toggleEditForm({{ inst.pk }})">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <form method="POST" action="{% url 'policies:delete_installment' inst.pk %}"
-                                              onsubmit="return confirm('حذف قسط {{ inst.installment_number }}؟')">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                    <!-- Inline edit form -->
-                                    <form method="POST" action="{% url 'policies:edit_installment' inst.pk %}"
-                                          id="edit-form-{{ inst.pk }}" style="display:none;" class="mt-2">
-                                        {% csrf_token %}
-                                        <div class="row g-1">
-                                            <div class="col-4">
-                                                <input type="number" name="amount" class="form-control form-control-sm"
-                                                       value="{{ inst.amount }}" dir="ltr">
-                                            </div>
-                                            <div class="col-3">
-                                                <input type="text" name="due_date" class="form-control form-control-sm"
-                                                       value="{{ inst.due_date }}" dir="ltr">
-                                            </div>
-                                            <div class="col-3">
-                                                <select name="status" class="form-select form-select-sm">
-                                                    <option value="pending" {% if inst.status == 'pending' %}selected{% endif %}>در انتظار</option>
-                                                    <option value="paid" {% if inst.status == 'paid' %}selected{% endif %}>پرداخت شده</option>
-                                                    <option value="overdue" {% if inst.status == 'overdue' %}selected{% endif %}>دیرکرد</option>
-                                                    <option value="partial" {% if inst.status == 'partial' %}selected{% endif %}>جزیی</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-2">
-                                                <button type="submit" class="btn btn-sm btn-success w-100">ذخیره</button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-muted text-center py-3">
-                    <i class="fas fa-inbox" style="font-size: 2rem;"></i><br>
-                    هنوز قسطی ایجاد نشده است.
-                </p>
-            {% endif %}
-        </div>
+    <!-- Tabs Navigation -->
+    <div class="col-12">
+        <ul class="nav nav-tabs" id="policyTabs" role="tablist" style="border-bottom: 2px solid #e0e0e0;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="installments-tab" data-bs-toggle="tab" data-bs-target="#installments" type="button" role="tab" aria-selected="true">
+                    <i class="fas fa-list-ol ms-1"></i> اقساط و پرداخت
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="endorsements-tab" data-bs-toggle="tab" data-bs-target="#endorsements" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-plus-circle ms-1"></i> الحاقیه‌ها
+                    {% if endorsements %}<span class="badge bg-primary ms-1">{{ endorsements|length }}</span>{% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="guarantee-tab" data-bs-toggle="tab" data-bs-target="#guarantee" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-file-invoice ms-1"></i> چک ضمانت
+                    {% if guarantee_checks %}<span class="badge bg-warning ms-1">{{ guarantee_checks|length }}</span>{% endif %}
+                </button>
+            </li>
+        </ul>
     </div>
 
-    <!-- Payments Section -->
-    <div class="col-lg-5">
-        <div class="content-card">
-            <div class="card-header-custom">
-                <h5><i class="fas fa-money-bill-wave ms-2" style="color: var(--success);"></i>ثبت واریزی جدید</h5>
-            </div>
-            <form method="POST" action="{% url 'policies:add_payment' policy.pk %}">
-                {% csrf_token %}
-                <div class="row g-2">
-                    {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
-                    <div class="col-12">
-                        <div class="p-2 rounded small" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
-                            <i class="fas fa-check-circle ms-1" style="color: #2e7d32;"></i>
-                            <strong>اعتبار قابل استفاده:</strong>
-                            <span style="color: #2e7d32;">{{ policy.overpayment_credit|intcomma }} ریال</span>
-                            <br><small class="text-muted">این مبلغ به طور خودکار از مبلغ قسط کسر می‌شود. فقط مابقی را پرداخت کنید.</small>
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class="col-12">
-                        <div class="d-flex gap-2 mb-2">
-                            {% if policy.down_payment and policy.down_payment > 0 and not policy.down_payment_paid %}
-                            <label class="btn btn-outline-custom btn-sm" id="dp_btn" onclick="selectPaymentType('down_payment')">
-                                <input type="radio" name="payment_type" value="down_payment" hidden>
-                                <i class="fas fa-hand-holding-usd ms-1"></i> پیش پرداخت
-                            </label>
-                            {% endif %}
-                            <label class="btn btn-outline-custom btn-sm active" id="inst_btn" onclick="selectPaymentType('installment')">
-                                <input type="radio" name="payment_type" value="installment" checked hidden>
-                                <i class="fas fa-list ms-1"></i> قسط
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-12" id="installment_select_wrapper">
-                        <label class="small text-muted">قسط مربوطه (اختیاری)</label>
-                        <select name="installment" class="form-select form-select-sm" onchange="fillInstallmentAmount(this)">
-                            <option value="">انتخاب قسط (اختیاری)</option>
-                            {% for inst in installments %}
-                                {% if inst.status != 'paid' %}
-                                <option value="{{ inst.pk }}" data-amount="{{ inst.amount }}">
-                                    قسط {{ inst.installment_number }} - {{ inst.amount|intcomma }} ریال
-                                </option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-6">
-                        <label class="small text-muted">مبلغ واریزی (ریال)</label>
-                        <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" placeholder="مبلغ" required>
-                    </div>
-                    <div class="col-6">
-                        <label class="small text-muted">تاریخ واریز</label>
-                        <input type="text" name="payment_date" class="form-control form-control-sm" dir="ltr" placeholder="1404/05/01" required>
-                    </div>
-                    <div class="col-6">
-                        <label class="small text-muted">روش پرداخت</label>
-                        <select name="payment_method" class="form-select form-select-sm" onchange="toggleChequeFields(this.value); handleCreditPayment(this.value)">
-                            <option value="cash">نقدی</option>
-                            <option value="card">کارت به کارت</option>
-                            <option value="check">چک</option>
-                            <option value="wire">حواله بانکی</option>
-                            {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
-                            <option value="credit">پرداخت از اعتبار ({{ policy.overpayment_credit|intcomma }} ریال)</option>
-                            {% endif %}
-                            <option value="other">سایر</option>
-                        </select>
-                    </div>
-                    <div class="col-6 cheque-field">
-                        <label class="small text-muted">شماره چک</label>
-                        <input type="text" name="reference_number" class="form-control form-control-sm" dir="ltr">
-                    </div>
-                    <div class="col-6 cheque-field">
-                        <label class="small text-muted">تاریخ سررسید چک</label>
-                        <input type="text" name="check_due_date" class="form-control form-control-sm date-input" dir="ltr" placeholder="1405/04/29">
-                    </div>
-                    <div class="col-6 cheque-field">
-                        <label class="small text-muted">نام بانک</label>
-                        <input type="text" name="check_bank_name" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-12 cheque-field">
-                        <label class="small text-muted">وضعیت چک</label>
-                        <select name="check_status" class="form-select form-select-sm">
-                            <option value="pending">در انتظار وصول</option>
-                            <option value="cleared">پاس شده</option>
-                            <option value="returned">برگشت خورده</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <label class="small text-muted">توضیحات</label>
-                        <textarea name="notes" class="form-control form-control-sm" rows="2"></textarea>
-                    </div>
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-check ms-1"></i> ثبت واریزی
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+    <!-- Tab Content -->
+    <div class="col-12">
+        <div class="tab-content" id="policyTabsContent">
 
-        <!-- Recent Payments -->
-        <div class="content-card mt-3">
-            <div class="card-header-custom">
-                <h5><i class="fas fa-history ms-2" style="color: var(--info);"></i>آخرین واریزی‌ها</h5>
-            </div>
-            {% if payments %}
-                <div class="table-responsive">
-                    <table class="table table-custom table-sm">
-                        <thead>
-                            <tr>
-                                <th>مبلغ</th>
-                                <th>تاریخ</th>
-                                <th>روش</th>
-                                <th>وضعیت چک</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in payments %}
-                            <tr>
-                                <td class="fw-bold">{{ p.amount|intcomma }}</td>
-                                <td>{{ p.payment_date }}</td>
-                                <td>{{ p.get_payment_method_display }}</td>
-                                <td>
-                                    {% if p.payment_method == 'check' and p.check_status %}
-                                        {% if p.check_status == 'cleared' %}
-                                            <span class="status-badge status-paid">✅ پاس شده</span>
-                                        {% elif p.check_status == 'returned' %}
-                                            <span class="status-badge status-overdue">❌ برگشت</span>
-                                        {% else %}
-                                            <span class="status-badge status-pending">⏳ در انتظار</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
+            <!-- TAB 1: Installments & Payments -->
+            <div class="tab-pane fade show active" id="installments" role="tabpanel">
+                <div class="row g-3 mt-1">
+                    <div class="col-lg-7">
+                        <div class="content-card">
+                            <div class="card-header-custom">
+                                <h5><i class="fas fa-list-ol ms-2" style="color: var(--info);"></i>مدیریت اقساط</h5>
+                            </div>
+                            {% if installments|length == 0 %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle ms-1"></i>
+                                برای این بیمه نامه هنوز قسطی تعریف نشده. فرم زیر را پر کنید تا اقساط به صورت خودکار ایجاد شود.
+                            </div>
+                            {% endif %}
+                            <form method="POST" action="{% url 'policies:generate_installments' policy.pk %}" class="row g-2 mb-4 p-3" style="background: var(--gray-bg); border-radius: 10px;">
+                                {% csrf_token %}
+                                <div class="col-md-2">
+                                    <label class="small text-muted">پیش پرداخت (ریال)</label>
+                                    <input type="number" name="down_payment_amount" class="form-control form-control-sm" id="id_down_payment" dir="ltr" value="{{ policy.down_payment|default:'0' }}" min="0" oninput="calcAmount()">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small text-muted">تعداد اقساط</label>
+                                    <input type="number" name="count" class="form-control form-control-sm" id="id_installment_count" min="1" max="60" oninput="calcAmount()" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small text-muted">مبلغ هر قسط (ریال)</label>
+                                    <input type="number" name="amount_per_installment" class="form-control form-control-sm" id="id_amount_per_installment" dir="ltr" value="{% if policy.amount_after_downpayment %}{{ policy.amount_after_downpayment|floatformat:'0' }}{% else %}0{% endif %}" required>
+                                    <small class="text-muted" id="suggested_amount"></small>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small text-muted">تاریخ شروع</label>
+                                    <input type="text" name="start_date" class="form-control form-control-sm" value="{{ policy.start_date|default:'' }}" dir="ltr" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small text-muted">فاصله اقساط</label>
+                                    <select name="interval" class="form-select form-select-sm">
+                                        <option value="30">ماهانه (۳۰ روز)</option>
+                                        <option value="60">دو ماهه (۶۰ روز)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary-custom btn-sm w-100"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </form>
+                            {% if installments %}
+                            <div class="table-responsive">
+                                <table class="table table-custom table-sm">
+                                    <thead><tr><th>#</th><th>مبلغ (ریال)</th><th>تاریخ سررسید</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+                                    <tbody>
+                                        {% for inst in installments %}
+                                        <tr>
+                                            <td>قسط {{ inst.installment_number }}</td>
+                                            <td class="fw-bold">{{ inst.amount|intcomma }}</td>
+                                            <td>{{ inst.due_date }}</td>
+                                            <td><span class="status-badge status-{{ inst.status }}">{{ inst.get_status_display }}</span></td>
+                                            <td>
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-custom" onclick="toggleEditForm({{ inst.pk }})"><i class="fas fa-edit"></i></button>
+                                                    <form method="POST" action="{% url 'policies:delete_installment' inst.pk %}" onsubmit="return confirm('حذف قسط {{ inst.installment_number }}؟')">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                                                    </form>
+                                                </div>
+                                                <form method="POST" action="{% url 'policies:edit_installment' inst.pk %}" id="edit-form-{{ inst.pk }}" style="display:none;" class="mt-2">
+                                                    {% csrf_token %}
+                                                    <div class="row g-1">
+                                                        <div class="col-4"><input type="number" name="amount" class="form-control form-control-sm" value="{{ inst.amount }}" dir="ltr"></div>
+                                                        <div class="col-3"><input type="text" name="due_date" class="form-control form-control-sm" value="{{ inst.due_date }}" dir="ltr"></div>
+                                                        <div class="col-3">
+                                                            <select name="status" class="form-select form-select-sm">
+                                                                <option value="pending" {% if inst.status == 'pending' %}selected{% endif %}>در انتظار</option>
+                                                                <option value="paid" {% if inst.status == 'paid' %}selected{% endif %}>پرداخت شده</option>
+                                                                <option value="overdue" {% if inst.status == 'overdue' %}selected{% endif %}>دیرکرد</option>
+                                                                <option value="partial" {% if inst.status == 'partial' %}selected{% endif %}>جزیی</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-2"><button type="submit" class="btn btn-sm btn-success w-100">ذخیره</button></div>
+                                                    </div>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted text-center py-3"><i class="fas fa-inbox" style="font-size: 2rem;"></i><br>هنوز قسطی ایجاد نشده است.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5">
+                        <div class="content-card">
+                            <div class="card-header-custom">
+                                <h5><i class="fas fa-money-bill-wave ms-2" style="color: var(--success);"></i>ثبت واریزی</h5>
+                            </div>
+                            <form method="POST" action="{% url 'policies:add_payment' policy.pk %}">
+                                {% csrf_token %}
+                                <div class="row g-2">
+                                    {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
+                                    <div class="col-12">
+                                        <div class="p-2 rounded small" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
+                                            <i class="fas fa-check-circle ms-1" style="color: #2e7d32;"></i>
+                                            <strong>اعتبار:</strong> {{ policy.overpayment_credit|intcomma }} ریال
+                                        </div>
+                                    </div>
                                     {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    <div class="col-12">
+                                        <div class="d-flex gap-2 mb-2">
+                                            {% if policy.down_payment and policy.down_payment > 0 and not policy.down_payment_paid %}
+                                            <label class="btn btn-outline-custom btn-sm" id="dp_btn" onclick="selectPaymentType('down_payment')">
+                                                <input type="radio" name="payment_type" value="down_payment" hidden><i class="fas fa-hand-holding-usd ms-1"></i> پیش پرداخت
+                                            </label>
+                                            {% endif %}
+                                            <label class="btn btn-outline-custom btn-sm active" id="inst_btn" onclick="selectPaymentType('installment')">
+                                                <input type="radio" name="payment_type" value="installment" checked hidden><i class="fas fa-list ms-1"></i> قسط
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12" id="installment_select_wrapper">
+                                        <label class="small text-muted">قسط</label>
+                                        <select name="installment" class="form-select form-select-sm" onchange="fillInstallmentAmount(this)">
+                                            <option value="">انتخاب کنید</option>
+                                            {% for inst in installments %}{% if inst.status != 'paid' %}
+                                            <option value="{{ inst.pk }}" data-amount="{{ inst.amount }}">قسط {{ inst.installment_number }} - {{ inst.amount|intcomma }} ریال</option>
+                                            {% endif %}{% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted">مبلغ (ریال)</label>
+                                        <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted">تاریخ</label>
+                                        <input type="text" name="payment_date" class="form-control form-control-sm" dir="ltr" placeholder="1404/05/01" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted">روش</label>
+                                        <select name="payment_method" class="form-select form-select-sm" onchange="toggleChequeFields(this.value); handleCreditPayment(this.value)">
+                                            <option value="cash">نقدی</option>
+                                            <option value="card">کارت به کارت</option>
+                                            <option value="check">چک</option>
+                                            <option value="wire">حواله</option>
+                                            {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
+                                            <option value="credit">اعتبار ({{ policy.overpayment_credit|intcomma }})</option>
+                                            {% endif %}
+                                        </select>
+                                    </div>
+                                    <div class="col-6 cheque-field" style="display:none;">
+                                        <label class="small text-muted">شماره چک</label>
+                                        <input type="text" name="reference_number" class="form-control form-control-sm" dir="ltr">
+                                    </div>
+                                    <div class="col-6 cheque-field" style="display:none;">
+                                        <label class="small text-muted">سررسید چک</label>
+                                        <input type="text" name="check_due_date" class="form-control form-control-sm date-input" dir="ltr">
+                                    </div>
+                                    <div class="col-6 cheque-field" style="display:none;">
+                                        <label class="small text-muted">بانک</label>
+                                        <input type="text" name="check_bank_name" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-12 cheque-field" style="display:none;">
+                                        <label class="small text-muted">وضعیت چک</label>
+                                        <select name="check_status" class="form-select form-select-sm">
+                                            <option value="pending">در انتظار وصول</option>
+                                            <option value="cleared">پاس شده</option>
+                                            <option value="returned">برگشت خورده</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-success w-100"><i class="fas fa-check ms-1"></i> ثبت</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        {% if payments %}
+                        <div class="content-card mt-3">
+                            <h6><i class="fas fa-history ms-1"></i> آخرین واریزی‌ها</h6>
+                            <div class="table-responsive">
+                                <table class="table table-custom table-sm">
+                                    <thead><tr><th>مبلغ</th><th>تاریخ</th><th>روش</th><th>وضعیت چک</th></tr></thead>
+                                    <tbody>
+                                        {% for p in payments %}
+                                        <tr>
+                                            <td class="fw-bold">{{ p.amount|intcomma }}</td>
+                                            <td>{{ p.payment_date }}</td>
+                                            <td>{{ p.get_payment_method_display }}</td>
+                                            <td>{% if p.payment_method == 'check' and p.check_status %}
+                                                <span class="status-badge status-{% if p.check_status == 'cleared' %}paid{% elif p.check_status == 'returned' %}overdue{% else %}pending{% endif %}">
+                                                    {{ p.get_check_status_display }}
+                                                </span>
+                                                {% else %}-{% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <a href="{% url 'policies:policy_payments' policy.pk %}" class="btn btn-outline-custom btn-sm w-100">
-                    مشاهده همه واریزی‌ها
-                </a>
-            {% else %}
-                <p class="text-muted text-center py-3">هنوز واریزی ثبت نشده.</p>
-            {% endif %}
-        </div>
-
-        <!-- Endorsements Section -->
-        <div class="content-card mt-3">
-            <div class="card-header-custom">
-                <h5><i class="fas fa-plus-circle ms-2" style="color: #1565c0;"></i>الحاقیه‌ها</h5>
-                <small class="text-muted">افزایش مبلغ بیمه به دلیل تغییر دیه و ...</small>
             </div>
-            <form method="POST" action="{% url 'policies:add_endorsement' policy.pk %}" class="row g-2 mb-3 p-2" style="background: #e3f2fd; border-radius: 8px;">
-                {% csrf_token %}
-                <div class="col-md-4">
-                    <label class="small text-muted">مبلغ الحاقیه (ریال)</label>
-                    <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" placeholder="مبلغ اضافه شده" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="small text-muted">دلیل</label>
-                    <input type="text" name="reason" class="form-control form-control-sm" value="تغییر دیه" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="small text-muted">تاریخ</label>
-                    <input type="text" name="date" class="form-control form-control-sm date-input" dir="ltr" placeholder="1405/04/29" required>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-sm w-100" style="background: #1565c0; color: white;">
-                        <i class="fas fa-plus ms-1"></i> ثبت الحاقیه
-                    </button>
-                </div>
-            </form>
-            {% if endorsements %}
-                <div class="table-responsive">
-                    <table class="table table-custom table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>مبلغ (ریال)</th>
-                                <th>دلیل</th>
-                                <th>تاریخ</th>
-                                <th>مبلغ قبل</th>
-                                <th>مبلغ بعد</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for e in endorsements %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td class="fw-bold" style="color: #1565c0;">+{{ e.amount|intcomma }}</td>
-                                <td><small>{{ e.reason|truncatechars:30 }}</small></td>
-                                <td>{{ e.date }}</td>
-                                <td><small class="text-muted">{{ e.previous_total|intcomma }}</small></td>
-                                <td class="fw-bold">{{ e.new_total|intcomma }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-muted small text-center py-2">هیچ الحاقیه‌ای ثبت نشده است.</p>
-            {% endif %}
-        </div>
 
-        <!-- Guarantee Checks Section -->
-        <div class="content-card mt-3">
-            <div class="card-header-custom">
-                <h5><i class="fas fa-file-invoice ms-2" style="color: #e65100;"></i>چک ضمانت حسن پرداخت</h5>
-                <small class="text-muted">(تأثیری در محاسبه اقساط ندارد)</small>
+            <!-- TAB 2: Endorsements -->
+            <div class="tab-pane fade" id="endorsements" role="tabpanel">
+                <div class="content-card mt-1">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-plus-circle ms-2" style="color: #1565c0;"></i>ثبت الحاقیه جدید</h5>
+                        <small class="text-muted">افزایش مبلغ بیمه به دلیل تغییر دیه و ...</small>
+                    </div>
+                    <form method="POST" action="{% url 'policies:add_endorsement' policy.pk %}" class="row g-2 p-2" style="background: #e3f2fd; border-radius: 8px;">
+                        {% csrf_token %}
+                        <div class="col-md-4">
+                            <label class="small text-muted">مبلغ (ریال)</label>
+                            <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">دلیل</label>
+                            <input type="text" name="reason" class="form-control form-control-sm" value="تغییر دیه" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">تاریخ</label>
+                            <input type="text" name="date" class="form-control form-control-sm date-input" dir="ltr" required>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-sm w-100" style="background: #1565c0; color: white;"><i class="fas fa-plus ms-1"></i> ثبت</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="content-card mt-3">
+                    <h5><i class="fas fa-list ms-2" style="color: #1565c0;"></i>لیست الحاقیه‌ها</h5>
+                    {% if endorsements %}
+                    <div class="table-responsive">
+                        <table class="table table-custom table-sm">
+                            <thead><tr><th>#</th><th>مبلغ</th><th>دلیل</th><th>تاریخ</th><th>مبلغ قبل</th><th>مبلغ بعد</th></tr></thead>
+                            <tbody>
+                                {% for e in endorsements %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td class="fw-bold" style="color: #1565c0;">+{{ e.amount|intcomma }}</td>
+                                    <td><small>{{ e.reason|truncatechars:30 }}</small></td>
+                                    <td>{{ e.date }}</td>
+                                    <td><small class="text-muted">{{ e.previous_total|intcomma }}</small></td>
+                                    <td class="fw-bold">{{ e.new_total|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted small text-center py-3">هنوز الحاقیه‌ای ثبت نشده است.</p>
+                    {% endif %}
+                </div>
             </div>
-            <form method="POST" action="{% url 'policies:add_guarantee_check' policy.pk %}" class="row g-2 mb-3 p-2" style="background: #fff8e1; border-radius: 8px;">
-                {% csrf_token %}
-                <div class="col-md-3">
-                    <label class="small text-muted">شماره چک</label>
-                    <input type="text" name="check_number" class="form-control form-control-sm" dir="ltr" required>
+
+            <!-- TAB 3: Guarantee Checks -->
+            <div class="tab-pane fade" id="guarantee" role="tabpanel">
+                <div class="content-card mt-1">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-file-invoice ms-2" style="color: #e65100;"></i>ثبت چک ضمانت جدید</h5>
+                        <small class="text-muted">(تأثیری در محاسبه اقساط ندارد)</small>
+                    </div>
+                    <form method="POST" action="{% url 'policies:add_guarantee_check' policy.pk %}" class="row g-2 p-2" style="background: #fff8e1; border-radius: 8px;">
+                        {% csrf_token %}
+                        <div class="col-md-3">
+                            <label class="small text-muted">شماره چک</label>
+                            <input type="text" name="check_number" class="form-control form-control-sm" dir="ltr" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-muted">بانک</label>
+                            <input type="text" name="bank_name" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">مبلغ (ریال)</label>
+                            <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-muted">سررسید</label>
+                            <input type="text" name="due_date" class="form-control form-control-sm date-input" dir="ltr">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-sm w-100" style="background: #e65100; color: white;"><i class="fas fa-plus ms-1"></i> افزودن</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="col-md-2">
-                    <label class="small text-muted">نام بانک</label>
-                    <input type="text" name="bank_name" class="form-control form-control-sm">
+                <div class="content-card mt-3">
+                    <h5><i class="fas fa-list ms-2" style="color: #e65100;"></i>چک‌های ضمانت</h5>
+                    {% if guarantee_checks %}
+                    <div class="table-responsive">
+                        <table class="table table-custom table-sm">
+                            <thead><tr><th>شماره چک</th><th>بانک</th><th>مبلغ</th><th>سررسید</th><th>وضعیت</th><th></th></tr></thead>
+                            <tbody>
+                                {% for c in guarantee_checks %}
+                                <tr>
+                                    <td>{{ c.check_number }}</td>
+                                    <td>{{ c.bank_name|default:'-' }}</td>
+                                    <td class="fw-bold">{{ c.amount|intcomma }}</td>
+                                    <td>{{ c.due_date }}</td>
+                                    <td><span class="status-badge status-{% if c.status == 'cleared' %}paid{% elif c.status == 'returned' %}overdue{% else %}pending{% endif %}">{{ c.get_status_display }}</span></td>
+                                    <td>
+                                        <form method="POST" action="{% url 'policies:delete_guarantee_check' c.pk %}" onsubmit="return confirm('حذف چک {{ c.check_number }}؟')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">هیچ چک ضمانتی ثبت نشده.</p>
+                    {% endif %}
                 </div>
-                <div class="col-md-3">
-                    <label class="small text-muted">مبلغ (ریال)</label>
-                    <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" required>
-                </div>
-                <div class="col-md-2">
-                    <label class="small text-muted">سررسید</label>
-                    <input type="text" name="due_date" class="form-control form-control-sm date-input" dir="ltr" placeholder="1405/04/29">
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-sm w-100" style="background: #e65100; color: white;">
-                        <i class="fas fa-plus ms-1"></i> افزودن
-                    </button>
-                </div>
-            </form>
-            {% if guarantee_checks %}
-                <div class="table-responsive">
-                    <table class="table table-custom table-sm">
-                        <thead>
-                            <tr>
-                                <th>شماره چک</th>
-                                <th>بانک</th>
-                                <th>مبلغ</th>
-                                <th>سررسید</th>
-                                <th>وضعیت</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for c in guarantee_checks %}
-                            <tr>
-                                <td>{{ c.check_number }}</td>
-                                <td>{{ c.bank_name|default:'-' }}</td>
-                                <td class="fw-bold">{{ c.amount|intcomma }}</td>
-                                <td>{{ c.due_date }}</td>
-                                <td>
-                                    <span class="status-badge status-{% if c.status == 'cleared' %}paid{% elif c.status == 'returned' %}overdue{% else %}pending{% endif %}">
-                                        {{ c.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <form method="POST" action="{% url 'policies:delete_guarantee_check' c.pk %}"
-                                          onsubmit="return confirm('حذف چک {{ c.check_number }}؟')">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-muted small text-center py-2">هیچ چک ضمانتی ثبت نشده است.</p>
-            {% endif %}
+            </div>
+
         </div>
     </div>
 </div>
 {% endblock %}
-
-{% block extra_scripts %}
 <script>
     // Select payment type: down_payment or installment
     function selectPaymentType(type) {
