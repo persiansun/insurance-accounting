@@ -210,6 +210,16 @@ def parse_excel(file_path: str) -> List[Dict]:
                     policy[model_field] = str(int(float(value)))
                 except (ValueError, TypeError):
                     policy[model_field] = str(value)
+            elif model_field == 'policy_number':
+                try:
+                    # Remove trailing ".0" from floats like 524.0 → 524
+                    num = float(value)
+                    if num == int(num):
+                        policy[model_field] = str(int(num))
+                    else:
+                        policy[model_field] = str(num)
+                except (ValueError, TypeError):
+                    policy[model_field] = str(value).strip() if isinstance(value, str) else str(value)
             else:
                 policy[model_field] = (
                     str(value).strip() if isinstance(value, str) else str(value)
