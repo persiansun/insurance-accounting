@@ -392,10 +392,10 @@
                     </div>
                     <div class="col-12" id="installment_select_wrapper">
                         <label class="small text-muted">قسط مربوطه (اختیاری)</label>
-                        <select name="installment" class="form-select form-select-sm">
+                        <select name="installment" class="form-select form-select-sm" onchange="fillInstallmentAmount(this)">
                             <option value="">انتخاب قسط (اختیاری)</option>
                             {% for inst in installments %}
-                                <option value="{{ inst.pk }}">
+                                <option value="{{ inst.pk }}" data-amount="{{ inst.amount }}">
                                     قسط {{ inst.installment_number }} - {{ inst.amount|intcomma }} ریال
                                 </option>
                             {% endfor %}
@@ -645,19 +645,33 @@
         var instWrapper = document.getElementById('installment_select_wrapper');
         var amountInput = document.querySelector('input[name="amount"]');
         var refInput = document.querySelector('input[name="reference_number"]');
+        var methodSelect = document.querySelector('select[name="payment_method"]');
 
         if (type === 'down_payment') {
             if (dpBtn) dpBtn.classList.add('active');
             if (instBtn) instBtn.classList.remove('active');
             if (instWrapper) instWrapper.style.display = 'none';
             if (amountInput) amountInput.value = '{{ policy.down_payment|default:"0" }}';
-            if (refInput) refInput.placeholder = 'شماره پیگیری پرداخت';
+            if (methodSelect) methodSelect.value = 'cash';
         } else {
             if (dpBtn) dpBtn.classList.remove('active');
             if (instBtn) instBtn.classList.add('active');
             if (instWrapper) instWrapper.style.display = 'block';
-            if (amountInput) amountInput.value = '';
+            // Auto-fill first unpaid installment
+            var instSelect = document.querySelector('select[name="installment"]');
+            if (instSelect && instSelect.options.length > 1) {
+                // Select first unpaid installment
+                for (var i = 1; i < instSelect.options.length; i++) {
+                    if (!instSelect.options[i].disabled) {
+                        instSelect.selectedIndex = i;
+                        fillInstallmentAmount(instSelect);
+                        break;
+                    }
+                }
+            }
+            if (amountInput) amountInput.readOnly = false;
             if (refInput) refInput.placeholder = '';
+            if (methodSelect) methodSelect.value = 'cash';
         }
     }
 
@@ -680,6 +694,19 @@
             if (amountInput) amountInput.readOnly = true;
         } else {
             if (amountInput) amountInput.readOnly = false;
+        }
+    }
+
+    // Auto-fill amount when an installment is selected
+    function fillInstallmentAmount(select) {
+        var amountInput = document.querySelector('input[name="amount"]');
+        var methodSelect = document.querySelector('select[name="payment_method"]');
+        if (!amountInput) return;
+        // Only auto-fill if payment type is not credit
+        if (methodSelect && methodSelect.value === 'credit') return;
+        var selected = select.options[select.selectedIndex];
+        if (selected && selected.dataset.amount) {
+            amountInput.value = selected.dataset.amount;
         }
     }
 
