@@ -490,7 +490,7 @@ class AddPaymentView(View):
                 amount=amount_int,
                 payment_date=payment_date,
                 payment_method=method,
-                reference_number=ref,
+                reference_number=ref or None,
                 notes='پیش پرداخت'
             )
 

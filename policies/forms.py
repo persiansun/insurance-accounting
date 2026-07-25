@@ -155,6 +155,9 @@ class PaymentForm(forms.ModelForm):
         ref = self.cleaned_data.get('reference_number')
         if ref:
             ref = ref.strip()
+            # Convert empty string to None (NULL) to avoid UNIQUE constraint issues
+            if not ref:
+                return None
             # Check uniqueness (exclude current instance if editing)
             qs = Payment.objects.filter(reference_number=ref)
             if self.instance and self.instance.pk:
@@ -163,7 +166,7 @@ class PaymentForm(forms.ModelForm):
                 raise ValidationError(
                     f'شماره پیگیری "{ref}" قبلاً ثبت شده است. شماره پیگیری باید یکتا باشد.'
                 )
-        return ref
+        return ref if ref else None
 
 
 class PolicyEditForm(forms.ModelForm):
