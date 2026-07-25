@@ -397,9 +397,11 @@
                         <select name="installment" class="form-select form-select-sm" onchange="fillInstallmentAmount(this)">
                             <option value="">انتخاب قسط (اختیاری)</option>
                             {% for inst in installments %}
+                                {% if inst.status != 'paid' %}
                                 <option value="{{ inst.pk }}" data-amount="{{ inst.amount }}">
                                     قسط {{ inst.installment_number }} - {{ inst.amount|intcomma }} ریال
                                 </option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                     </div>
@@ -653,27 +655,23 @@
             if (dpBtn) dpBtn.classList.add('active');
             if (instBtn) instBtn.classList.remove('active');
             if (instWrapper) instWrapper.style.display = 'none';
-            if (amountInput) amountInput.value = '{{ policy.down_payment|default:"0" }}';
+            // Auto-fill down payment amount
+            var dpAmount = '{{ policy.down_payment|default:"0" }}';
+            if (amountInput) { amountInput.value = dpAmount; amountInput.readOnly = false; }
             if (methodSelect) methodSelect.value = 'cash';
         } else {
             if (dpBtn) dpBtn.classList.remove('active');
             if (instBtn) instBtn.classList.add('active');
             if (instWrapper) instWrapper.style.display = 'block';
-            // Auto-fill first unpaid installment
-            var instSelect = document.querySelector('select[name="installment"]');
-            if (instSelect && instSelect.options.length > 1) {
-                // Select first unpaid installment
-                for (var i = 1; i < instSelect.options.length; i++) {
-                    if (!instSelect.options[i].disabled) {
-                        instSelect.selectedIndex = i;
-                        fillInstallmentAmount(instSelect);
-                        break;
-                    }
-                }
-            }
             if (amountInput) amountInput.readOnly = false;
             if (refInput) refInput.placeholder = '';
             if (methodSelect) methodSelect.value = 'cash';
+            // Auto-fill first unpaid installment
+            var instSelect = document.querySelector('select[name="installment"]');
+            if (instSelect && instSelect.options.length > 1) {
+                instSelect.selectedIndex = 1; // First non-placeholder option
+                fillInstallmentAmount(instSelect);
+            }
         }
     }
 
