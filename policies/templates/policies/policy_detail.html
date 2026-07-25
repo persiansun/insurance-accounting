@@ -115,18 +115,14 @@
             <label class="text-muted small">پوشش مالی (میلیون ریال)</label>
             <p class="mb-0">{{ policy.financial_coverage|default:'0'|intcomma }}</p>
         </div>
-        {% if policy.agent_name %}
         <div class="col-md-3">
             <label class="text-muted small">نماینده / معرف</label>
-            <p class="mb-0">{{ policy.agent_name }}</p>
+            <p class="mb-0">{{ policy.agent_name|default:'-' }}</p>
         </div>
-        {% endif %}
-        {% if policy.agent_phone %}
         <div class="col-md-3">
             <label class="text-muted small">شماره تماس معرف</label>
-            <p class="mb-0 fw-bold" dir="ltr" style="color: #1565c0;">{{ policy.agent_phone }}</p>
+            <p class="mb-0 fw-bold" dir="ltr" style="color: #1565c0;">{{ policy.agent_phone|default:'-' }}</p>
         </div>
-        {% endif %}
         {% if policy.contract_description %}
         <div class="col-12">
             <label class="text-muted small">شرح قرارداد</label>
