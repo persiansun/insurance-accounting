@@ -130,6 +130,12 @@ class InsurancePolicy(models.Model):
     # Extra raw data (full Excel row as JSON)
     raw_data = models.JSONField('داده خام', blank=True, null=True)
 
+    # Overpayment credit (instead of modifying installment amounts)
+    overpayment_credit = models.BigIntegerField(
+        'اعتبار اضافه پرداخت (ریال)', blank=True, null=True, default=0,
+        help_text='اضافه پرداختی که به قسط بعدی اعمال می‌شود'
+    )
+
     # Metadata
     created_at = models.DateTimeField('تاریخ ثبت', auto_now_add=True)
     updated_at = models.DateTimeField('آخرین ویرایش', auto_now=True)
@@ -171,17 +177,8 @@ class InsurancePolicy(models.Model):
 
     @property
     def overpayment_total(self):
-        """Total overpayment across all installments (amount reduced from original)"""
-        # Calculate the difference between original installment amounts and current amounts
-        # if any installment has notes about overpayment transfer
-        total_overpayment = 0
-        for inst in self.installments.all():
-            if inst.notes and 'انتقال اضافه پرداخت' in inst.notes:
-                import re
-                matches = re.findall(r'(\d[\d,]*)\s*ریال', inst.notes)
-                for m in matches:
-                    total_overpayment += int(m.replace(',', ''))
-        return total_overpayment
+        """Total overpayment credit available on this policy"""
+        return self.overpayment_credit or 0
 
 
 class Installment(models.Model):
@@ -284,42 +281,43 @@ class Payment(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        """Auto-update installment status and handle overpayment transfer"""
+        """Auto-update installment status and handle overpayment as credit"""
+        from django.db import transaction
+
         is_new = self.pk is None
         super().save(*args, **kwargs)
 
         if is_new and self.installment:
-            total_paid = self.installment.payments.aggregate(
-                total=models.Sum('amount')
-            )['total'] or 0
+            with transaction.atomic():
+                total_paid = self.installment.payments.aggregate(
+                    total=models.Sum('amount')
+                )['total'] or 0
 
-            if total_paid >= self.installment.amount:
-                self.installment.status = 'paid'
+                # Check if there's available credit to apply
+                credit = self.policy.overpayment_credit or 0
+                effective_amount = max(0, self.installment.amount - credit)
 
-                # 🎯 Overpayment: transfer extra amount to next installment
-                overpayment = total_paid - self.installment.amount
-                if overpayment > 0:
-                    next_inst = Installment.objects.filter(
-                        policy=self.policy,
-                        installment_number=self.installment.installment_number + 1
-                    ).first()
-                    if next_inst and next_inst.status != 'paid':
-                        # Reduce next installment by overpayment
-                        next_inst.amount = max(0, next_inst.amount - overpayment)
-                        note = (
-                            f'[انتقال اضافه پرداخت از قسط '
-                            f'{self.installment.installment_number}: '
-                            f'{overpayment:,} ریال]'
-                        )
-                        old_notes = next_inst.notes or ''
-                        next_inst.notes = f'{note}\n{old_notes}' if old_notes else note
-                        next_inst.save(update_fields=['amount', 'notes'])
+                if total_paid >= effective_amount:
+                    self.installment.status = 'paid'
 
-            elif total_paid > 0:
-                self.installment.status = 'partial'
-            else:
-                self.installment.status = 'pending'
-            self.installment.save(update_fields=['status'])
+                    # Handle overpayment → add to credit instead of modifying next installment
+                    overpayment = total_paid - effective_amount
+                    if overpayment > 0:
+                        self.policy.overpayment_credit = (self.policy.overpayment_credit or 0) + overpayment
+                        self.policy.save(update_fields=['overpayment_credit'])
+
+                    # If credit was used, deduct it
+                    if credit > 0 and total_paid > 0:
+                        used_credit = min(credit, total_paid)
+                        self.policy.overpayment_credit = (self.policy.overpayment_credit or 0) - used_credit
+                        self.policy.save(update_fields=['overpayment_credit'])
+
+                elif total_paid > 0:
+                    self.installment.status = 'partial'
+                else:
+                    self.installment.status = 'pending'
+
+                self.installment.save(update_fields=['status'])
 
 
 class Endorsement(models.Model):

@@ -186,13 +186,13 @@
         <small class="text-muted">{% widthratio paid_amount total 100 %}% از اقساط پرداخت شده</small>
         {% endif %}
         {% endwith %}
-        {% if policy.overpayment_total %}
-        <div class="mt-2 p-2 rounded" style="background: #fff8e1; border: 1px solid #ffe082;">
+        {% if policy.overpayment_credit and policy.overpayment_credit > 0 %}
+        <div class="mt-2 p-2 rounded" style="background: #e8f5e9; border: 1px solid #a5d6a7;">
             <small>
-                <i class="fas fa-arrow-circle-left ms-1" style="color: #f57f17;"></i>
-                <strong>اضافه پرداخت منتقل شده:</strong>
-                <span style="color: #e65100;">{{ policy.overpayment_total|intcomma }} ریال</span>
-                — به قسط بعدی اعمال شد
+                <i class="fas fa-arrow-circle-left ms-1" style="color: #2e7d32;"></i>
+                <strong>اعتبار قابل استفاده:</strong>
+                <span style="color: #2e7d32;">{{ policy.overpayment_credit|intcomma }} ریال</span>
+                — این مبلغ از قسط بعدی کسر می‌شود
             </small>
         </div>
         {% endif %}
