@@ -265,6 +265,12 @@
                     {% if guarantee_checks %}<span class="badge bg-warning ms-1">{{ guarantee_checks|length }}</span>{% endif %}
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="insured-tab" data-bs-toggle="tab" data-bs-target="#insured" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-users ms-1"></i> افراد تحت پوشش
+                    {% if insured_persons %}<span class="badge bg-info ms-1">{{ insured_persons|length }}</span>{% endif %}
+                </button>
+            </li>
         </ul>
     </div>
 
@@ -594,6 +600,64 @@
                     </div>
                     {% else %}
                     <p class="text-muted text-center py-3">هیچ چک ضمانتی ثبت نشده.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- TAB 4: Insured Persons -->
+            <div class="tab-pane fade" id="insured" role="tabpanel">
+                <div class="content-card mt-1">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-users ms-2" style="color: #0288d1;"></i>افراد تحت پوشش</h5>
+                        <small class="text-muted">برای بیمه‌های مسئولیت، افراد تحت پوشش را وارد کنید</small>
+                    </div>
+                    <form method="POST" action="{% url 'policies:add_insured' policy.pk %}" class="row g-2 p-2" style="background: #e1f5fe; border-radius: 8px;">
+                        {% csrf_token %}
+                        <div class="col-md-4">
+                            <label class="small text-muted">نام و نام خانوادگی</label>
+                            <input type="text" name="full_name" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">کد ملی</label>
+                            <input type="text" name="national_code" class="form-control form-control-sm" dir="ltr">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">شماره تماس</label>
+                            <input type="text" name="phone" class="form-control form-control-sm" dir="ltr">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-sm w-100" style="background: #0288d1; color: white;">
+                                <i class="fas fa-plus ms-1"></i> افزودن
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="content-card mt-3">
+                    <h5><i class="fas fa-list ms-2" style="color: #0288d1;"></i>لیست افراد</h5>
+                    {% if insured_persons %}
+                    <div class="table-responsive">
+                        <table class="table table-custom table-sm">
+                            <thead><tr><th>#</th><th>نام</th><th>کد ملی</th><th>تماس</th><th></th></tr></thead>
+                            <tbody>
+                                {% for person in insured_persons %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ person.full_name }}</td>
+                                    <td>{{ person.national_code|default:'-' }}</td>
+                                    <td dir="ltr">{{ person.phone|default:'-' }}</td>
+                                    <td>
+                                        <form method="POST" action="{% url 'policies:delete_insured' person.pk %}" onsubmit="return confirm('حذف {{ person.full_name }}؟')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">هنوز فردی اضافه نشده است.</p>
                     {% endif %}
                 </div>
             </div>
