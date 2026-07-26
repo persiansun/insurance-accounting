@@ -1099,8 +1099,13 @@ class CustomerListView(View):
         # Sort by name
         customers_list = sorted(customers.values(), key=lambda c: c['name'])
 
+        # Pagination: 20 per page
+        paginator = Paginator(customers_list, 20)
+        page = request.GET.get('page', 1)
+        customers_page = paginator.get_page(page)
+
         return render(request, 'policies/customer_list.html', {
-            'customers': customers_list,
+            'customers': customers_page,
             'search': search,
             'section': 'customers',
         })
