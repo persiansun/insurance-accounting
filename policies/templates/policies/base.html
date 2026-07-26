@@ -560,6 +560,10 @@
             <i class="fas fa-cog"></i>
             پنل مدیریت
         </a>
+        <a href="/admin/auth/user/add/" target="_blank">
+            <i class="fas fa-user-plus"></i>
+            کاربر جدید
+        </a>
         <form method="POST" action="{% url 'logout' %}" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="btn btn-link text-decoration-none" style="color: rgba(255,255,255,0.8); padding: 12px 20px; display: flex; align-items: center; gap: 10px; width: 100%; border: none; background: none; font-size: 0.95rem; cursor: pointer;">
