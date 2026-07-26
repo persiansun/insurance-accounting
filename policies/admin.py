@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, InsuredPerson, AppSettings
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings
 
 
 @admin.register(InsuranceType)
@@ -165,16 +165,6 @@ class GuaranteeCheckAdmin(admin.ModelAdmin):
         colors = {'pending': '#0d6efd', 'cleared': '#2e7d32', 'returned': '#c62828'}
         return mark_safe(f'<span style="color: {colors.get(obj.status, "black")};">{obj.get_status_display()}</span>')
     status_colored.short_description = 'وضعیت'
-
-
-@admin.register(InsuredPerson)
-class InsuredPersonAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'policy_link', 'national_code', 'phone']
-    search_fields = ['full_name', 'national_code', 'policy__policyholder']
-
-    def policy_link(self, obj):
-        return mark_safe(f'<a href="/admin/policies/insurancepolicy/{obj.policy.pk}/change/">{obj.policy.policyholder[:30]}</a>')
-    policy_link.short_description = 'بیمه نامه'
 
 
 @admin.register(AppSettings)

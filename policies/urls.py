@@ -34,6 +34,4 @@ urlpatterns = [
     path('customers/<str:phone>/', views.CustomerDetailView.as_view(), name='customer_detail'),
     path('reports/commission/', views.CommissionReportView.as_view(), name='commission_report'),
     path('reports/commission/export/excel/', views.ExportCommissionView.as_view(), name='export_commission'),
-    path('policies/<int:pk>/insured/add/', views.AddInsuredPersonView.as_view(), name='add_insured'),
-    path('insured/<int:pk>/delete/', views.DeleteInsuredPersonView.as_view(), name='delete_insured'),
 ]

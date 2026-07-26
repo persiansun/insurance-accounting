@@ -9,7 +9,7 @@ from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, InsuredPerson, AppSettings
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings
 from .forms import (
     ExcelUploadForm, InstallmentGenerateForm,
     PaymentForm, InstallmentEditForm, PolicyEditForm, GuaranteeCheckForm, EndorsementForm
@@ -328,7 +328,6 @@ class PolicyDetailView(View):
         guarantee_checks = policy.guarantee_checks.all().order_by('-created_at')
         endorsement_form = EndorsementForm()
         endorsements = policy.endorsements.all().order_by('-created_at')
-        insured_persons = policy.insured_persons.all().order_by('full_name')
 
         context = {
             'policy': policy,
@@ -344,7 +343,6 @@ class PolicyDetailView(View):
             'guarantee_checks': guarantee_checks,
             'endorsement_form': endorsement_form,
             'endorsements': endorsements,
-            'insured_persons': insured_persons,
             'section': 'policies',
         }
         return render(request, 'policies/policy_detail.html', context)
@@ -1141,38 +1139,6 @@ class CustomerDetailView(View):
             'section': 'customers',
         }
         return render(request, 'policies/customer_detail.html', context)
-
-
-class AddInsuredPersonView(View):
-    """افزودن فرد تحت پوشش"""
-
-    def post(self, request, pk):
-        policy = get_object_or_404(InsurancePolicy, pk=pk)
-        name = request.POST.get('full_name', '').strip()
-        if not name:
-            messages.error(request, 'نام فرد تحت پوشش الزامی است')
-            return redirect('policies:policy_detail', pk=pk)
-
-        InsuredPerson.objects.create(
-            policy=policy,
-            full_name=name,
-            national_code=request.POST.get('national_code', '').strip(),
-            phone=request.POST.get('phone', '').strip(),
-            description=request.POST.get('description', '').strip(),
-        )
-        messages.success(request, f'{name} به لیست افراد تحت پوشش اضافه شد')
-        return redirect('policies:policy_detail', pk=pk)
-
-
-class DeleteInsuredPersonView(View):
-    """حذف فرد تحت پوشش"""
-
-    def post(self, request, pk):
-        person = get_object_or_404(InsuredPerson, pk=pk)
-        policy_pk = person.policy.pk
-        person.delete()
-        messages.success(request, 'فرد تحت پوشش حذف شد')
-        return redirect('policies:policy_detail', pk=policy_pk)
 
 
 class CommissionReportView(View):

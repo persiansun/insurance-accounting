@@ -478,27 +478,6 @@ class GuaranteeCheck(models.Model):
         return f'چک {self.check_number} - {self.amount:,} ریال'
 
 
-class InsuredPerson(models.Model):
-    """افراد تحت پوشش بیمه (مخصوص بیمه مسئولیت)"""
-    policy = models.ForeignKey(
-        InsurancePolicy, on_delete=models.CASCADE,
-        related_name='insured_persons', verbose_name='بیمه نامه'
-    )
-    full_name = models.CharField('نام و نام خانوادگی', max_length=255)
-    national_code = models.CharField('کد ملی', max_length=20, blank=True, null=True)
-    phone = models.CharField('شماره تماس', max_length=50, blank=True, null=True)
-    description = models.CharField('توضیحات', max_length=500, blank=True, null=True)
-    created_at = models.DateTimeField('تاریخ ثبت', auto_now_add=True)
-
-    class Meta:
-        verbose_name = 'فرد تحت پوشش'
-        verbose_name_plural = 'افراد تحت پوشش'
-        ordering = ['full_name']
-
-    def __str__(self):
-        return f'{self.full_name}'
-
-
 class AppSettings(models.Model):
     """تنظیمات برنامه — فعال/غیرفعال کردن ماژول‌ها"""
     key = models.CharField('کلید', max_length=100, unique=True)
