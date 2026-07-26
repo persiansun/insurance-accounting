@@ -1,0 +1,74 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}پشتیبان‌گیری{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-database ms-2"></i>پشتیبان‌گیری و بازیابی دیتابیس</h4>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="content-card text-center">
+            <i class="fas fa-download" style="font-size: 3rem; color: var(--primary);"></i>
+            <h5 class="mt-3">پشتیبان‌گیری</h5>
+            <p class="text-muted small">یک نسخه پشتیبان از دیتابیس فعلی تهیه کنید.</p>
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" name="action" value="backup" class="btn btn-primary-custom">
+                    <i class="fas fa-database ms-1"></i> گرفتن پشتیبان
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="content-card text-center">
+            <i class="fas fa-upload" style="font-size: 3rem; color: #e65100;"></i>
+            <h5 class="mt-3">بازیابی</h5>
+            <p class="text-muted small">دیتابیس را از روی فایل پشتیبان قبلی بازیابی کنید.</p>
+            <a href="{% url 'policies:restore_db' %}" class="btn" style="background: #e65100; color: white;">
+                <i class="fas fa-upload ms-1"></i> بازیابی دیتابیس
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if backups %}
+<div class="content-card mt-3">
+    <h5><i class="fas fa-history ms-2"></i>پشتیبان‌های قبلی</h5>
+    <div class="table-responsive">
+        <table class="table table-custom table-sm">
+            <thead>
+                <tr>
+                    <th>نام فایل</th>
+                    <th>تاریخ</th>
+                    <th>حجم</th>
+                    <th>دانلود</th>
+                    <th>بازیابی</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in backups %}
+                <tr>
+                    <td><small>{{ b.name }}</small></td>
+                    <td>{{ b.date }}</td>
+                    <td>{{ b.size }}</td>
+                    <td>
+                        <a href="{% url 'policies:download_backup' %}?file={{ b.name }}" class="btn btn-sm btn-outline-custom">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'policies:restore_db' %}?file={{ b.name }}" class="btn btn-sm btn-outline-custom">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}بازیابی دیتابیس{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-upload ms-2"></i>بازیابی دیتابیس</h4>
+    <p class="text-muted">فایل پشتیبان (.db) را آپلود کنید تا دیتابیس فعلی جایگزین شود.</p>
+</div>
+
+<div class="content-card">
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle ms-1"></i>
+        <strong>توجه:</strong> قبل از بازیابی، یک نسخه پشتیبان خودکار از دیتابیس فعلی گرفته می‌شود.
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="text-center py-4">
+        {% csrf_token %}
+        <div class="mb-3">
+            <i class="fas fa-file-archive" style="font-size: 4rem; color: #e65100;"></i>
+            <h5 class="mt-2">فایل پشتیبان را انتخاب کنید</h5>
+            <p class="text-muted small">فقط فایل‌های با پسوند .db</p>
+        </div>
+        <input type="file" name="backup_file" accept=".db" class="form-control mb-3" required style="max-width: 400px; margin: 0 auto;">
+        <button type="submit" class="btn" style="background: #e65100; color: white;">
+            <i class="fas fa-upload ms-1"></i> بازیابی
+        </button>
+        <a href="{% url 'policies:backup_db' %}" class="btn btn-outline-custom">انصراف</a>
+    </form>
+</div>
+{% endblock %}

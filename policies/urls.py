@@ -25,4 +25,7 @@ urlpatterns = [
     path('reports/expiry/export/excel/', views.ExportExpiryReportView.as_view(), name='export_expiry_report'),
     path('reports/daily/', views.DailyReportView.as_view(), name='daily_report'),
     path('reports/export/excel/', views.ExportExcelView.as_view(), name='export_excel'),
+    path('backup/', views.BackupDatabaseView.as_view(), name='backup_db'),
+    path('backup/download/', views.DownloadBackupView.as_view(), name='download_backup'),
+    path('restore/', views.RestoreDatabaseView.as_view(), name='restore_db'),
 ]

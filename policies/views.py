@@ -913,6 +913,92 @@ class ExportExcelView(View):
         return response
 
 
+class BackupDatabaseView(View):
+    """پشتیبان‌گیری از دیتابیس"""
+
+    def get(self, request):
+        import shutil
+        from django.conf import settings
+        from datetime import datetime
+
+        backup_dir = settings.BASE_DIR / 'backups'
+        backup_dir.mkdir(exist_ok=True)
+        backups = sorted(backup_dir.glob('*.db'), key=os.path.getmtime, reverse=True)[:20]
+        backup_list = []
+        for b in backups:
+            size = b.stat().st_size
+            mtime = datetime.fromtimestamp(b.stat().st_mtime).strftime('%Y-%m-%d %H:%M')
+            backup_list.append({'name': b.name, 'size': f'{size / 1024:.1f} KB', 'date': mtime})
+
+        return render(request, 'policies/backup.html', {'backups': backup_list, 'section': 'backup'})
+
+    def post(self, request):
+        import shutil
+        from django.conf import settings
+        from datetime import datetime
+
+        if request.POST.get('action') == 'backup':
+            db_path = settings.BASE_DIR / 'db.sqlite3'
+            backup_dir = settings.BASE_DIR / 'backups'
+            backup_dir.mkdir(exist_ok=True)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_path = backup_dir / f'backup_{timestamp}.db'
+            shutil.copy2(db_path, backup_path)
+            messages.success(request, f'✅ پشتیبان: backup_{timestamp}.db')
+        return redirect('policies:backup_db')
+
+
+class DownloadBackupView(View):
+    """دانلود فایل پشتیبان"""
+
+    def get(self, request):
+        from django.conf import settings
+        filename = request.GET.get('file', '')
+        file_path = settings.BASE_DIR / 'backups' / filename
+        if not file_path.exists():
+            messages.error(request, 'فایل یافت نشد')
+            return redirect('policies:backup_db')
+        response = HttpResponse(file_path.read_bytes(), content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+
+class RestoreDatabaseView(View):
+    """بازیابی دیتابیس"""
+
+    def get(self, request):
+        return render(request, 'policies/restore.html', {'section': 'backup'})
+
+    def post(self, request):
+        import shutil
+        from django.conf import settings
+        from datetime import datetime
+
+        if 'backup_file' not in request.FILES:
+            messages.error(request, 'فایلی انتخاب نشده')
+            return render(request, 'policies/restore.html', {'section': 'backup'})
+
+        uploaded = request.FILES['backup_file']
+        if not uploaded.name.endswith('.db'):
+            messages.error(request, 'فقط .db مجاز است')
+            return render(request, 'policies/restore.html', {'section': 'backup'})
+
+        db_path = settings.BASE_DIR / 'db.sqlite3'
+        backup_dir = settings.BASE_DIR / 'backups'
+        backup_dir.mkdir(exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        auto_backup = backup_dir / f'pre_restore_{timestamp}.db'
+        if db_path.exists():
+            shutil.copy2(db_path, auto_backup)
+
+        with open(db_path, 'wb+') as f:
+            for chunk in uploaded.chunks():
+                f.write(chunk)
+
+        messages.success(request, '✅ دیتابیس بازیابی شد. پشتیبان خودکار قبل از بازیابی ذخیره شد.')
+        return redirect('policies:backup_db')
+
+
 def ajax_policy_stats(request):
     """AJAX endpoint for dashboard stats"""
     total = InsurancePolicy.objects.count()
