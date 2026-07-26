@@ -1099,9 +1099,14 @@ class CustomerListView(View):
 
     def get(self, request):
         search = request.GET.get('search', '')
+        type_filter = request.GET.get('type', '')
         customers = {}
 
-        for p in InsurancePolicy.objects.all():
+        policies = InsurancePolicy.objects.all()
+        if type_filter:
+            policies = policies.filter(insurance_type__slug=type_filter)
+
+        for p in policies:
             key = p.phone or p.policyholder
             if key not in customers:
                 customers[key] = {
@@ -1135,6 +1140,8 @@ class CustomerListView(View):
         return render(request, 'policies/customer_list.html', {
             'customers': customers_page,
             'search': search,
+            'type_filter': type_filter,
+            'insurance_types': InsuranceType.objects.filter(is_active=True),
             'section': 'customers',
         })
 

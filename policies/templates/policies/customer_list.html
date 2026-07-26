@@ -17,6 +17,14 @@
             <input type="text" name="search" class="form-control" placeholder="جستجو در نام یا شماره تماس..." value="{{ search }}">
         </div>
         <div class="col-md-2">
+            <select name="type" class="form-select">
+                <option value="">همه انواع بیمه</option>
+                {% for t in insurance_types %}
+                    <option value="{{ t.slug }}" {% if type_filter == t.slug %}selected{% endif %}>{{ t.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
             <button type="submit" class="btn btn-primary-custom w-100"><i class="fas fa-search ms-1"></i> جستجو</button>
         </div>
         <div class="col-md-2">
