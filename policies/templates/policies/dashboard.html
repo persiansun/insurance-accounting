@@ -169,6 +169,22 @@
     </div>
 </div>
 
+<!-- Charts Section -->
+<div class="row mt-3 g-3">
+    <div class="col-lg-7">
+        <div class="content-card">
+            <h5><i class="fas fa-chart-bar ms-2" style="color: var(--info);"></i>واریزی‌های ماهانه</h5>
+            <canvas id="monthlyChart" height="200"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="content-card">
+            <h5><i class="fas fa-chart-pie ms-2" style="color: var(--success);"></i>وضعیت اقساط</h5>
+            <canvas id="statusChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
 <!-- Recent Payments -->
 <div class="row mt-3">
     <div class="col-12">
@@ -211,4 +227,54 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var ctx1 = document.getElementById('monthlyChart');
+    if (ctx1) {
+        new Chart(ctx1.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: {{ monthly_labels|safe }},
+                datasets: [{
+                    label: 'واریزی (ریال)',
+                    data: {{ monthly_data }},
+                    backgroundColor: 'rgba(26, 35, 126, 0.6)',
+                    borderColor: 'rgba(26, 35, 126, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString(); } } }
+                }
+            }
+        });
+    }
+    var ctx2 = document.getElementById('statusChart');
+    if (ctx2) {
+        new Chart(ctx2.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ status_labels|safe }},
+                datasets: [{
+                    data: {{ status_data }},
+                    backgroundColor: ['#2e7d32', '#0d6efd', '#c62828', '#e65100'],
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 11 } } }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

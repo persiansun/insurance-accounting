@@ -30,6 +30,30 @@ class DashboardView(View):
 
         total_payments = Payment.objects.aggregate(total=Sum('amount'))['total'] or 0
 
+        # Chart data: monthly payments for last 6 months
+        today = jdatetime.date.today()
+        monthly_labels = []
+        monthly_data = []
+        for i in range(5, -1, -1):
+            from datetime import timedelta
+            month_date = today - timedelta(days=30 * i)
+            month_str = month_date.strftime('%Y/%m')
+            month_name = month_date.strftime('%B')
+            total = Payment.objects.filter(payment_date__startswith=month_str).aggregate(
+                total=Sum('amount')
+            )['total'] or 0
+            monthly_labels.append(month_name)
+            monthly_data.append(total)
+
+        # Status distribution for donut chart
+        status_labels = ['پرداخت شده', 'در انتظار', 'دیرکرد', 'جزیی']
+        status_data = [
+            Installment.objects.filter(status='paid').count(),
+            Installment.objects.filter(status='pending').count(),
+            Installment.objects.filter(status='overdue').count(),
+            Installment.objects.filter(status='partial').count(),
+        ]
+
         # Stats by insurance type
         type_stats = []
         for it in InsuranceType.objects.filter(is_active=True):
@@ -65,6 +89,10 @@ class DashboardView(View):
             'overdue_list': overdue_list,
             'recent_payments': recent_payments,
             'type_stats': type_stats,
+            'monthly_labels': monthly_labels,
+            'monthly_data': monthly_data,
+            'status_labels': status_labels,
+            'status_data': status_data,
             'today_date': today,
             'section': 'dashboard',
         }
