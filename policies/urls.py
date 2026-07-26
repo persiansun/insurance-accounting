@@ -39,4 +39,6 @@ urlpatterns = [
     path('accounting/expense/delete/<int:pk>/', views.DeleteExpenseView.as_view(), name='delete_expense'),
     path('accounting/bank/add/', views.AddBankView.as_view(), name='add_bank'),
     path('accounting/bank/transaction/', views.AddBankTransactionView.as_view(), name='add_bank_transaction'),
+    path('policies/<int:pk>/documents/add/', views.AddDocumentView.as_view(), name='add_document'),
+    path('documents/<int:pk>/delete/', views.DeleteDocumentView.as_view(), name='delete_document'),
 ]

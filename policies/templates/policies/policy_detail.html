@@ -265,6 +265,12 @@
                     {% if guarantee_checks %}<span class="badge bg-warning ms-1">{{ guarantee_checks|length }}</span>{% endif %}
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-paperclip ms-1"></i> مدارک
+                    {% if documents %}<span class="badge bg-info ms-1">{{ documents|length }}</span>{% endif %}
+                </button>
+            </li>
         </ul>
     </div>
 
@@ -594,6 +600,58 @@
                     </div>
                     {% else %}
                     <p class="text-muted text-center py-3">هیچ چک ضمانتی ثبت نشده.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- TAB 5: Documents -->
+            <div class="tab-pane fade" id="documents" role="tabpanel">
+                <div class="content-card mt-1">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-paperclip ms-2" style="color: #0288d1;"></i>آپلود مدرک جدید</h5>
+                    </div>
+                    <form method="POST" action="{% url 'policies:add_document' policy.pk %}" enctype="multipart/form-data" class="row g-2 p-2" style="background: #e1f5fe; border-radius: 8px;">
+                        {% csrf_token %}
+                        <div class="col-md-4">
+                            <label class="small text-muted">عنوان</label>
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="مثال: تصویر بیمه نامه" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">فایل</label>
+                            <input type="file" name="file" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-sm w-100" style="background: #0288d1; color: white;">
+                                <i class="fas fa-upload"></i> آپلود
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="content-card mt-3">
+                    <h5><i class="fas fa-list ms-2" style="color: #0288d1;"></i>مدارک</h5>
+                    {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table table-custom table-sm">
+                            <thead><tr><th>عنوان</th><th>فایل</th><th>تاریخ</th><th></th></tr></thead>
+                            <tbody>
+                                {% for d in documents %}
+                                <tr>
+                                    <td>{{ d.title }}</td>
+                                    <td><a href="{{ d.file.url }}" target="_blank" class="btn btn-sm btn-outline-custom"><i class="fas fa-eye"></i> مشاهده</a></td>
+                                    <td><small>{{ d.uploaded_at|date:'Y/m/d' }}</small></td>
+                                    <td>
+                                        <form method="POST" action="{% url 'policies:delete_document' d.pk %}" onsubmit="return confirm('حذف {{ d.title }}؟')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">مدرکی آپلود نشده.</p>
                     {% endif %}
                 </div>
             </div>

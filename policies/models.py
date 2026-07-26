@@ -560,3 +560,22 @@ class BankTransaction(models.Model):
         verbose_name = 'تراکنش بانکی'
         verbose_name_plural = 'تراکنش‌های بانکی'
         ordering = ['-date', '-created_at']
+
+
+class Document(models.Model):
+    """ضمیمه مدارک بیمه نامه"""
+    policy = models.ForeignKey(
+        InsurancePolicy, on_delete=models.CASCADE,
+        related_name='documents', verbose_name='بیمه نامه'
+    )
+    title = models.CharField('عنوان', max_length=200)
+    file = models.FileField('فایل', upload_to='documents/%Y/%m/')
+    uploaded_at = models.DateTimeField('تاریخ آپلود', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'مدرک'
+        verbose_name_plural = 'مدارک'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return self.title

@@ -9,7 +9,7 @@ from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings, Expense, ExpenseCategory, BankAccount, BankTransaction
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings, Expense, ExpenseCategory, BankAccount, BankTransaction, Document
 from .forms import (
     ExcelUploadForm, InstallmentGenerateForm,
     PaymentForm, InstallmentEditForm, PolicyEditForm, GuaranteeCheckForm, EndorsementForm
@@ -356,6 +356,7 @@ class PolicyDetailView(View):
         guarantee_checks = policy.guarantee_checks.all().order_by('-created_at')
         endorsement_form = EndorsementForm()
         endorsements = policy.endorsements.all().order_by('-created_at')
+        documents = policy.documents.all().order_by('-uploaded_at')
 
         context = {
             'policy': policy,
@@ -371,6 +372,7 @@ class PolicyDetailView(View):
             'guarantee_checks': guarantee_checks,
             'endorsement_form': endorsement_form,
             'endorsements': endorsements,
+            'documents': documents,
             'section': 'policies',
         }
         return render(request, 'policies/policy_detail.html', context)
@@ -1107,6 +1109,35 @@ class AddBankTransactionView(View):
 
         messages.success(request, 'تراکنش ثبت شد')
         return redirect('policies:accounting')
+
+
+class AddDocumentView(View):
+    """آپلود مدرک"""
+
+    def post(self, request, pk):
+        policy = get_object_or_404(InsurancePolicy, pk=pk)
+        if 'file' not in request.FILES:
+            messages.error(request, 'فایلی انتخاب نشده')
+            return redirect('policies:policy_detail', pk=pk)
+
+        Document.objects.create(
+            policy=policy,
+            title=request.POST.get('title', 'مدرک'),
+            file=request.FILES['file'],
+        )
+        messages.success(request, 'مدرک با موفقیت آپلود شد')
+        return redirect('policies:policy_detail', pk=pk)
+
+
+class DeleteDocumentView(View):
+    """حذف مدرک"""
+
+    def post(self, request, pk):
+        doc = get_object_or_404(Document, pk=pk)
+        policy_pk = doc.policy.pk
+        doc.delete()
+        messages.success(request, 'مدرک حذف شد')
+        return redirect('policies:policy_detail', pk=policy_pk)
 
 
 class BackupDatabaseView(View):

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings, Expense, ExpenseCategory, BankAccount, BankTransaction
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings, Expense, ExpenseCategory, BankAccount, BankTransaction, Document
 
 
 @admin.register(InsuranceType)
@@ -212,6 +212,16 @@ class BankTransactionAdmin(admin.ModelAdmin):
     def amount_display(self, obj):
         return f'{obj.amount:,}'
     amount_display.short_description = 'مبلغ'
+
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ['title', 'policy_link', 'file', 'uploaded_at']
+    search_fields = ['title', 'policy__policyholder']
+
+    def policy_link(self, obj):
+        return mark_safe(f'<a href="/admin/policies/insurancepolicy/{obj.policy.pk}/change/">{obj.policy.policyholder[:30]}</a>')
+    policy_link.short_description = 'بیمه نامه'
 
 
 @admin.register(Endorsement)
