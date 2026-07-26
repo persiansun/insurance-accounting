@@ -9,7 +9,7 @@
         <h4><i class="fas fa-file-contract ms-2"></i>جزئیات بیمه نامه</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'policies:policy_list' %}">لیست بیمه نامه‌ها</a></li>
+                <li class="breadcrumb-item"><a href="javascript:history.back()">لیست بیمه نامه‌ها</a></li>
                 <li class="breadcrumb-item active">{{ policy.policyholder|truncatechars:30 }}</li>
             </ol>
         </nav>
@@ -18,7 +18,7 @@
         <a href="{% url 'policies:policy_edit' policy.pk %}" class="btn btn-primary-custom">
             <i class="fas fa-edit ms-1"></i> ویرایش
         </a>
-        <a href="{% url 'policies:policy_list' %}" class="btn btn-outline-custom">
+        <a href="javascript:history.back()" class="btn btn-outline-custom">
             <i class="fas fa-arrow-right ms-1"></i> بازگشت
         </a>
         <form method="POST" action="{% url 'policies:policy_delete' policy.pk %}"
