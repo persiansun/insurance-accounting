@@ -712,6 +712,78 @@ class DeleteInstallmentView(View):
         return redirect('policies:policy_detail', pk=policy_pk)
 
 
+class ExpiryReportView(View):
+    """گزارش سررسید بیمه نامه‌ها"""
+
+    def get(self, request):
+        today = jdatetime.date.today()
+        default_to = today + jdatetime.timedelta(days=10)
+
+        date_from = request.GET.get('date_from', today.strftime('%Y/%m/%d'))
+        date_to = request.GET.get('date_to', default_to.strftime('%Y/%m/%d'))
+
+        policies = InsurancePolicy.objects.filter(
+            end_date__isnull=False
+        ).exclude(end_date='').order_by('end_date')
+
+        # Filter by date range (jalali dates stored as strings YYYY/MM/DD)
+        filtered = []
+        for p in policies:
+            if p.end_date and date_from <= p.end_date <= date_to:
+                filtered.append(p)
+
+        context = {
+            'policies': filtered,
+            'date_from': date_from,
+            'date_to': date_to,
+            'today': today.strftime('%Y/%m/%d'),
+            'section': 'reports',
+        }
+        return render(request, 'policies/expiry_report.html', context)
+
+
+class ExportExpiryReportView(View):
+    """خروجی اکسل گزارش سررسیدها"""
+
+    def get(self, request):
+        import pandas as pd
+        from django.http import HttpResponse
+
+        date_from = request.GET.get('date_from', '')
+        date_to = request.GET.get('date_to', '')
+
+        policies = InsurancePolicy.objects.filter(
+            end_date__isnull=False
+        ).exclude(end_date='').order_by('end_date')
+
+        if date_from and date_to:
+            policies = [p for p in policies if p.end_date and date_from <= p.end_date <= date_to]
+
+        data = []
+        for i, p in enumerate(policies, 1):
+            data.append({
+                'ردیف': i,
+                'نام مشتری': p.policyholder,
+                'نوع بیمه': p.insurance_type.name if p.insurance_type else '',
+                'نوع خودرو': p.vehicle_type or '',
+                'شماره پلاک': p.plate_number or '',
+                'شماره تماس': p.phone or '',
+                'تاریخ شروع': p.start_date or '',
+                'تاریخ پایان': p.end_date or '',
+            })
+
+        df = pd.DataFrame(data)
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="expiry_report_{date_from}_{date_to}.xlsx"'
+
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='گزارش سررسید')
+
+        return response
+
+
 class ReportsView(View):
     """Main reports page"""
 

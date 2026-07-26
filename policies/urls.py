@@ -21,6 +21,8 @@ urlpatterns = [
     path('installments/<int:pk>/edit/', views.EditInstallmentView.as_view(), name='edit_installment'),
     path('installments/<int:pk>/delete/', views.DeleteInstallmentView.as_view(), name='delete_installment'),
     path('reports/', views.ReportsView.as_view(), name='reports'),
+    path('reports/expiry/', views.ExpiryReportView.as_view(), name='expiry_report'),
+    path('reports/expiry/export/excel/', views.ExportExpiryReportView.as_view(), name='export_expiry_report'),
     path('reports/daily/', views.DailyReportView.as_view(), name='daily_report'),
     path('reports/export/excel/', views.ExportExcelView.as_view(), name='export_excel'),
 ]

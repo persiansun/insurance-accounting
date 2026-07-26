@@ -1,0 +1,114 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}گزارش سررسید بیمه نامه‌ها{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-calendar-alt ms-2"></i>گزارش سررسید بیمه نامه‌ها</h4>
+    <p class="text-muted">مشاهده بیمه نامه‌هایی که تاریخ انقضای آنها در بازه مشخصی قرار دارد</p>
+</div>
+
+<div class="content-card">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="small text-muted">از تاریخ</label>
+            <input type="text" name="date_from" class="form-control" dir="ltr" value="{{ date_from }}" placeholder="1405/01/01">
+        </div>
+        <div class="col-md-3">
+            <label class="small text-muted">تا تاریخ</label>
+            <input type="text" name="date_to" class="form-control" dir="ltr" value="{{ date_to }}" placeholder="1405/12/29">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary-custom w-100"><i class="fas fa-search ms-1"></i> نمایش</button>
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'policies:expiry_report' %}" class="btn btn-outline-custom w-100">امروز</a>
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'policies:export_expiry_report' %}?date_from={{ date_from }}&date_to={{ date_to }}"
+               class="btn btn-success w-100" id="exportBtn">
+                <i class="fas fa-file-excel ms-1"></i> خروجی اکسل
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <small class="text-muted">تعداد: <strong>{{ policies|length|intcomma }}</strong> بیمه نامه</small>
+    </div>
+
+    {% if policies %}
+    <div class="table-responsive">
+        <table class="table table-custom table-sm" id="expiryTable">
+            <thead>
+                <tr>
+                    <th>ردیف</th>
+                    <th>نام مشتری</th>
+                    <th>نوع بیمه</th>
+                    <th>نوع خودرو</th>
+                    <th>شماره پلاک</th>
+                    <th>شماره تماس</th>
+                    <th>تاریخ شروع</th>
+                    <th>تاریخ پایان</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in policies %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <a href="{% url 'policies:policy_detail' p.pk %}">
+                            {{ p.policyholder|truncatechars:30 }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if p.insurance_type %}
+                            <span class="badge" style="background: #e8eaf6; color: var(--primary);">{{ p.insurance_type.name }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.vehicle_type|default:'-' }}</td>
+                    <td>{{ p.plate_number|default:'-' }}</td>
+                    <td>
+                        {% if p.phone %}
+                            <span dir="ltr">{{ p.phone }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.start_date|default:'-' }}</td>
+                    <td>
+                        <span class="fw-bold">{{ p.end_date }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="fas fa-calendar-check" style="font-size: 4rem;"></i>
+        <p class="mt-3">هیچ بیمه نامه‌ای در این بازه سررسید نمی‌شود.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Auto-format date inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name="date_from"], input[name="date_to"]').forEach(function(input) {
+            input.addEventListener('blur', function() {
+                var val = this.value.replace(/\s/g, '');
+                if (val && !val.includes('/') && val.length === 8 && /^\d+$/.test(val)) {
+                    this.value = val.substring(0, 4) + '/' + val.substring(4, 6) + '/' + val.substring(6, 8);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

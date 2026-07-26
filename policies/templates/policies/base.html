@@ -454,6 +454,11 @@
             <i class="fas fa-calendar-day"></i>
             اقساط روزانه
         </a>
+        <a href="{% url 'policies:expiry_report' %}"
+           class="{% if section == 'reports' %}active{% endif %}">
+            <i class="fas fa-clock"></i>
+            سررسید بیمه نامه‌ها
+        </a>
         <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
         <a href="/admin/" target="_blank">
             <i class="fas fa-cog"></i>
