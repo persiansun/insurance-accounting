@@ -1,0 +1,67 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}پروفایل {{ customer_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-user ms-2"></i>{{ customer_name }}</h4>
+        <p class="text-muted">
+            {% if customer_phone and customer_phone != 'no-phone' %}
+                <i class="fas fa-phone ms-1"></i> {{ customer_phone }}
+            {% endif %}
+            | {{ policies|length }} بیمه نامه
+        </p>
+    </div>
+    <a href="javascript:history.back()" class="btn btn-outline-custom"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+</div>
+
+{% for p in policies %}
+<div class="content-card mb-3">
+    <div class="card-header-custom">
+        <h5>
+            <i class="fas fa-file-contract ms-1"></i>
+            بیمه نامه {{ forloop.counter }}
+            {% if p.insurance_type %}
+                <span class="badge" style="background: var(--primary); color: white;">{{ p.insurance_type.name }}</span>
+            {% endif %}
+        </h5>
+        <a href="{% url 'policies:policy_detail' p.pk %}" class="btn btn-sm btn-outline-custom">جزئیات</a>
+    </div>
+    <div class="row g-2 small">
+        <div class="col-md-2"><strong>شماره:</strong> {{ p.policy_number|default:'-' }}</div>
+        <div class="col-md-2"><strong>شروع:</strong> {{ p.start_date|default:'-' }}</div>
+        <div class="col-md-2"><strong>پایان:</strong> {{ p.end_date|default:'-' }}</div>
+        <div class="col-md-2"><strong>مبلغ:</strong> {{ p.total_with_tax|default:'0'|intcomma }}</div>
+        <div class="col-md-2"><strong>پرداخت:</strong> {{ p.total_paid|intcomma }}</div>
+        <div class="col-md-2">
+            <strong>مانده:</strong>
+            <span class="{% if p.total_debt > 0 %}text-danger{% else %}text-success{% endif %}">
+                {{ p.total_debt|intcomma }}
+            </span>
+        </div>
+    </div>
+    <div class="mt-2">
+        <table class="table table-custom table-sm">
+            <thead><tr><th>قسط</th><th>مبلغ</th><th>سررسید</th><th>وضعیت</th></tr></thead>
+            <tbody>
+                {% for inst in p.installments.all|dictsort:'installment_number' %}
+                <tr>
+                    <td>{{ inst.installment_number }}</td>
+                    <td>{{ inst.amount|intcomma }}</td>
+                    <td>{{ inst.due_date }}</td>
+                    <td><span class="status-badge status-{{ inst.status }}">{{ inst.get_status_display }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-5 text-muted">
+    <i class="fas fa-inbox" style="font-size: 4rem;"></i>
+    <p class="mt-3">هیچ بیمه نامه‌ای برای این مشتری یافت نشد.</p>
+</div>
+{% endfor %}
+{% endblock %}

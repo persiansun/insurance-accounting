@@ -1066,6 +1066,72 @@ class NotificationsView(View):
         return render(request, 'policies/notifications.html', context)
 
 
+class CustomerListView(View):
+    """لیست مشتریان (بر اساس شماره تماس)"""
+
+    def get(self, request):
+        search = request.GET.get('search', '')
+        customers = {}
+
+        for p in InsurancePolicy.objects.all():
+            key = p.phone or p.policyholder
+            if key not in customers:
+                customers[key] = {
+                    'name': p.policyholder,
+                    'phone': p.phone or '',
+                    'national_code': p.national_code or '',
+                    'policies': [],
+                    'total_paid': 0,
+                    'total_debt': 0,
+                }
+            customers[key]['policies'].append(p)
+            customers[key]['total_paid'] += p.total_paid
+            customers[key]['total_debt'] += p.total_debt
+
+        # Filter by search
+        if search:
+            filtered = {}
+            for key, c in customers.items():
+                if search in c['name'] or search in c['phone']:
+                    filtered[key] = c
+            customers = filtered
+
+        # Sort by name
+        customers_list = sorted(customers.values(), key=lambda c: c['name'])
+
+        return render(request, 'policies/customer_list.html', {
+            'customers': customers_list,
+            'search': search,
+            'section': 'customers',
+        })
+
+
+class CustomerDetailView(View):
+    """مشاهده همه بیمه نامه‌های یک مشتری"""
+
+    def get(self, request, phone):
+        if phone == 'no-phone':
+            policies = InsurancePolicy.objects.filter(phone__isnull=True)
+        else:
+            policies = InsurancePolicy.objects.filter(phone=phone)
+
+        if not policies.exists():
+            # Try by name
+            from urllib.parse import unquote
+            name = unquote(phone)
+            policies = InsurancePolicy.objects.filter(policyholder__icontains=name)
+
+        customer_name = policies.first().policyholder if policies.exists() else 'نامشخص'
+
+        context = {
+            'customer_name': customer_name,
+            'customer_phone': phone,
+            'policies': policies,
+            'section': 'customers',
+        }
+        return render(request, 'policies/customer_detail.html', context)
+
+
 def ajax_policy_stats(request):
     """AJAX endpoint for dashboard stats"""
     total = InsurancePolicy.objects.count()

@@ -39,7 +39,14 @@
     <div class="row g-3">
         <div class="col-md-3">
             <label class="text-muted small">بیمه گذار</label>
-            <p class="fw-bold mb-0">{{ policy.policyholder }}</p>
+            <p class="fw-bold mb-0">
+                {{ policy.policyholder }}
+                {% if policy.phone %}
+                    <a href="{% url 'policies:customer_detail' policy.phone %}" class="btn btn-sm btn-outline-custom py-0 px-1 ms-2" title="مشاهده همه بیمه نامه‌های این مشتری">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                {% endif %}
+            </p>
         </div>
         <div class="col-md-2">
             <label class="text-muted small">نوع بیمه</label>

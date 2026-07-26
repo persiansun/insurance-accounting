@@ -1,0 +1,62 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}مشتریان{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-users ms-2"></i>مشتریان</h4>
+        <p class="text-muted">همه مشتریان به تفکیک شماره تماس</p>
+    </div>
+</div>
+
+<div class="content-card">
+    <form method="GET" class="row g-2 mb-3">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" placeholder="جستجو در نام یا شماره تماس..." value="{{ search }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary-custom w-100"><i class="fas fa-search ms-1"></i> جستجو</button>
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'policies:customer_list' %}" class="btn btn-outline-custom w-100">پاک کردن</a>
+        </div>
+    </form>
+
+    <div class="text-muted small mb-3">تعداد مشتریان: {{ customers|length|intcomma }}</div>
+
+    <div class="row g-3">
+        {% for c in customers %}
+        <div class="col-md-6 col-lg-4">
+            <div class="content-card p-3" style="cursor: pointer;" onclick="window.location='{% url 'policies:customer_detail' c.phone|default:'no-phone' %}'">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width: 50px; height: 50px; background: var(--primary); color: white; font-size: 1.3rem;">
+                        {{ c.name|first }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <strong>{{ c.name|truncatechars:25 }}</strong><br>
+                        <small class="text-muted">
+                            {% if c.phone %}{{ c.phone }}{% else %}<span class="text-danger">بدون شماره</span>{% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between mt-2 small">
+                    <span>{{ c.policies|length }} بیمه نامه</span>
+                    <span>پرداخت: {{ c.total_paid|intcomma }}</span>
+                    <span class="{% if c.total_debt > 0 %}text-danger{% else %}text-success{% endif %}">
+                        بدهی: {{ c.total_debt|intcomma }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="fas fa-users" style="font-size: 4rem;"></i>
+            <p class="mt-3">مشتری‌ای یافت نشد.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -30,4 +30,6 @@ urlpatterns = [
     path('restore/', views.RestoreDatabaseView.as_view(), name='restore_db'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
     path('notifications/', views.NotificationsView.as_view(), name='notifications'),
+    path('customers/', views.CustomerListView.as_view(), name='customer_list'),
+    path('customers/<str:phone>/', views.CustomerDetailView.as_view(), name='customer_detail'),
 ]
