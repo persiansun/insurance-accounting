@@ -449,6 +449,11 @@
             <i class="fas fa-chart-bar"></i>
             گزارش‌ها
         </a>
+        <a href="{% url 'policies:commission_report' %}"
+           class="{% if section == 'reports' %}active{% endif %}">
+            <i class="fas fa-percentage"></i>
+            کمیسیون
+        </a>
         <a href="{% url 'policies:notifications' %}"
            class="{% if section == 'notifications' %}active{% endif %}">
             <i class="fas fa-bell"></i>
