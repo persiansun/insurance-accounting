@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings, Expense, ExpenseCategory, BankAccount, BankTransaction
 
 
 @admin.register(InsuranceType)
@@ -171,6 +171,47 @@ class GuaranteeCheckAdmin(admin.ModelAdmin):
 class AppSettingsAdmin(admin.ModelAdmin):
     list_display = ['label', 'category', 'value']
     list_filter = ['category', 'value']
+
+
+@admin.register(ExpenseCategory)
+class ExpenseCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'color_tag', 'is_active']
+    list_filter = ['is_active']
+
+    def color_tag(self, obj):
+        return mark_safe(f'<span style="background:{obj.color}; color:white; padding:2px 8px; border-radius:4px;">{obj.color}</span>')
+    color_tag.short_description = 'رنگ'
+
+
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ['title', 'category', 'amount_display', 'date', 'created_at']
+    list_filter = ['category', 'date']
+    search_fields = ['title', 'description']
+
+    def amount_display(self, obj):
+        return f'{obj.amount:,}'
+    amount_display.short_description = 'مبلغ'
+
+
+@admin.register(BankAccount)
+class BankAccountAdmin(admin.ModelAdmin):
+    list_display = ['name', 'account_number', 'balance_display', 'is_active']
+    list_filter = ['is_active']
+
+    def balance_display(self, obj):
+        return f'{obj.balance:,}'
+    balance_display.short_description = 'موجودی'
+
+
+@admin.register(BankTransaction)
+class BankTransactionAdmin(admin.ModelAdmin):
+    list_display = ['account', 'transaction_type', 'amount_display', 'date', 'description']
+    list_filter = ['transaction_type', 'date', 'account']
+
+    def amount_display(self, obj):
+        return f'{obj.amount:,}'
+    amount_display.short_description = 'مبلغ'
 
 
 @admin.register(Endorsement)

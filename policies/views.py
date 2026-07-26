@@ -9,7 +9,7 @@ from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
-from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings
+from .models import InsurancePolicy, Installment, Payment, InsuranceType, GuaranteeCheck, Endorsement, AppSettings, Expense, ExpenseCategory, BankAccount, BankTransaction
 from .forms import (
     ExcelUploadForm, InstallmentGenerateForm,
     PaymentForm, InstallmentEditForm, PolicyEditForm, GuaranteeCheckForm, EndorsementForm
@@ -939,6 +939,113 @@ class ExportExcelView(View):
             df.to_excel(writer, index=False, sheet_name='Report')
 
         return response
+
+
+class AccountingView(View):
+    """صفحه حسابداری"""
+
+    def get(self, request):
+        from django.db.models import Sum
+
+        # Expenses
+        expenses = Expense.objects.all().order_by('-date', '-created_at')[:50]
+        total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
+        expense_categories = ExpenseCategory.objects.filter(is_active=True)
+
+        # Expense stats by category
+        cat_stats = []
+        for cat in expense_categories:
+            total = Expense.objects.filter(category=cat).aggregate(total=Sum('amount'))['total'] or 0
+            if total > 0:
+                cat_stats.append({'name': cat.name, 'total': total, 'color': cat.color})
+
+        # Bank accounts
+        accounts = BankAccount.objects.filter(is_active=True)
+
+        # Total income from payments
+        total_income = Payment.objects.aggregate(total=Sum('amount'))['total'] or 0
+
+        # Profit/Loss
+        profit = total_income - total_expenses
+
+        context = {
+            'expenses': expenses,
+            'total_expenses': total_expenses,
+            'total_income': total_income,
+            'profit': profit,
+            'expense_categories': expense_categories,
+            'cat_stats': cat_stats,
+            'accounts': accounts,
+            'section': 'accounting',
+        }
+        return render(request, 'policies/accounting.html', context)
+
+
+class AddExpenseView(View):
+    """ثبت هزینه"""
+
+    def post(self, request):
+        Expense.objects.create(
+            category_id=request.POST.get('category') or None,
+            title=request.POST.get('title', ''),
+            amount=int(request.POST.get('amount', 0)),
+            date=request.POST.get('date', ''),
+            description=request.POST.get('description', ''),
+        )
+        messages.success(request, 'هزینه با موفقیت ثبت شد')
+        return redirect('policies:accounting')
+
+
+class DeleteExpenseView(View):
+    """حذف هزینه"""
+
+    def post(self, request, pk):
+        expense = get_object_or_404(Expense, pk=pk)
+        expense.delete()
+        messages.success(request, 'هزینه حذف شد')
+        return redirect('policies:accounting')
+
+
+class AddBankView(View):
+    """افزودن حساب بانکی"""
+
+    def post(self, request):
+        BankAccount.objects.create(
+            name=request.POST.get('name', ''),
+            account_number=request.POST.get('account_number', ''),
+            card_number=request.POST.get('card_number', ''),
+            sheba=request.POST.get('sheba', ''),
+            balance=int(request.POST.get('balance', 0)),
+        )
+        messages.success(request, 'حساب بانکی اضافه شد')
+        return redirect('policies:accounting')
+
+
+class AddBankTransactionView(View):
+    """ثبت تراکنش بانکی"""
+
+    def post(self, request):
+        account = get_object_or_404(BankAccount, pk=request.POST.get('account'))
+        amount = int(request.POST.get('amount', 0))
+        ttype = request.POST.get('transaction_type', 'deposit')
+
+        BankTransaction.objects.create(
+            account=account,
+            transaction_type=ttype,
+            amount=amount,
+            date=request.POST.get('date', ''),
+            description=request.POST.get('description', ''),
+        )
+
+        # Update balance
+        if ttype == 'deposit':
+            account.balance += amount
+        else:
+            account.balance -= amount
+        account.save(update_fields=['balance'])
+
+        messages.success(request, 'تراکنش ثبت شد')
+        return redirect('policies:accounting')
 
 
 class BackupDatabaseView(View):

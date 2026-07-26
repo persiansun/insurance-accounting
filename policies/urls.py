@@ -34,4 +34,9 @@ urlpatterns = [
     path('customers/<str:phone>/', views.CustomerDetailView.as_view(), name='customer_detail'),
     path('reports/commission/', views.CommissionReportView.as_view(), name='commission_report'),
     path('reports/commission/export/excel/', views.ExportCommissionView.as_view(), name='export_commission'),
+    path('accounting/', views.AccountingView.as_view(), name='accounting'),
+    path('accounting/expense/add/', views.AddExpenseView.as_view(), name='add_expense'),
+    path('accounting/expense/delete/<int:pk>/', views.DeleteExpenseView.as_view(), name='delete_expense'),
+    path('accounting/bank/add/', views.AddBankView.as_view(), name='add_bank'),
+    path('accounting/bank/transaction/', views.AddBankTransactionView.as_view(), name='add_bank_transaction'),
 ]

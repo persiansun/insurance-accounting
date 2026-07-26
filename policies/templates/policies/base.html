@@ -555,6 +555,11 @@
             <i class="fas fa-cog"></i>
             تنظیمات
         </a>
+        <a href="{% url 'policies:accounting' %}"
+           class="{% if section == 'accounting' %}active{% endif %}">
+            <i class="fas fa-calculator"></i>
+            حسابداری
+        </a>
         <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
         <a href="/admin/" target="_blank">
             <i class="fas fa-cog"></i>

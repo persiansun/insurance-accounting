@@ -492,3 +492,71 @@ class AppSettings(models.Model):
 
     def __str__(self):
         return f'{self.label}: {"فعال" if self.value else "غیرفعال"}'
+
+
+class ExpenseCategory(models.Model):
+    """دسته‌بندی هزینه‌ها"""
+    name = models.CharField('نام دسته', max_length=200)
+    color = models.CharField('رنگ', max_length=20, default='#6c757d', help_text='کد رنگ هگز')
+    is_active = models.BooleanField('فعال', default=True)
+
+    class Meta:
+        verbose_name = 'دسته هزینه'
+        verbose_name_plural = 'دسته‌بندی هزینه‌ها'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class Expense(models.Model):
+    """ثبت هزینه"""
+    category = models.ForeignKey(ExpenseCategory, on_delete=models.SET_NULL, null=True, verbose_name='دسته')
+    title = models.CharField('عنوان', max_length=300)
+    amount = models.BigIntegerField('مبلغ (ریال)')
+    date = models.CharField('تاریخ', max_length=20, help_text="فرمت: 1405/04/29")
+    description = models.TextField('توضیحات', blank=True, null=True)
+    created_at = models.DateTimeField('تاریخ ثبت', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'هزینه'
+        verbose_name_plural = 'هزینه‌ها'
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f'{self.title} - {self.amount:,} ریال'
+
+
+class BankAccount(models.Model):
+    """حساب بانکی"""
+    name = models.CharField('نام بانک', max_length=200)
+    account_number = models.CharField('شماره حساب', max_length=100, blank=True, null=True)
+    card_number = models.CharField('شماره کارت', max_length=30, blank=True, null=True)
+    sheba = models.CharField('شبا', max_length=30, blank=True, null=True)
+    balance = models.BigIntegerField('موجودی (ریال)', default=0)
+    is_active = models.BooleanField('فعال', default=True)
+
+    class Meta:
+        verbose_name = 'حساب بانکی'
+        verbose_name_plural = 'حساب‌های بانکی'
+        ordering = ['name']
+
+    def __str__(self):
+        return f'{self.name} ({self.balance:,} ریال)'
+
+
+class BankTransaction(models.Model):
+    """تراکنش بانکی"""
+    TRANSACTION_TYPES = [('deposit', 'واریز'), ('withdraw', 'برداشت')]
+
+    account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name='transactions', verbose_name='حساب')
+    transaction_type = models.CharField('نوع', max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.BigIntegerField('مبلغ (ریال)')
+    date = models.CharField('تاریخ', max_length=20, help_text="فرمت: 1405/04/29")
+    description = models.CharField('شرح', max_length=500, blank=True, null=True)
+    created_at = models.DateTimeField('تاریخ ثبت', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'تراکنش بانکی'
+        verbose_name_plural = 'تراکنش‌های بانکی'
+        ordering = ['-date', '-created_at']
