@@ -1,0 +1,40 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}تنظیمات برنامه{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-cog ms-2"></i>تنظیمات برنامه</h4>
+    <p class="text-muted">فعال یا غیرفعال کردن قابلیت‌های مختلف نرم‌افزار</p>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    {% for cat, items in categories.items %}
+    <div class="content-card mb-3">
+        <h5 class="mb-3" style="color: var(--primary);">
+            <i class="fas fa-folder ms-1"></i> {{ cat }}
+        </h5>
+        {% for s in items %}
+        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+            <div>
+                <strong>{{ s.label }}</strong>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="setting_{{ s.key }}" name="setting_{{ s.key }}"
+                       {% if s.value %}checked{% endif %}
+                       style="width: 50px; height: 25px; cursor: pointer;">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary-custom btn-lg">
+            <i class="fas fa-save ms-1"></i> ذخیره تنظیمات
+        </button>
+    </div>
+</form>
+{% endblock %}

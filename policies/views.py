@@ -999,6 +999,29 @@ class RestoreDatabaseView(View):
         return redirect('policies:backup_db')
 
 
+class SettingsView(View):
+    """تنظیمات برنامه"""
+
+    def get(self, request):
+        settings_items = AppSettings.objects.all().order_by('category', 'key')
+        from collections import defaultdict
+        categories = defaultdict(list)
+        for s in settings_items:
+            cat = s.category or 'عمومی'
+            categories[cat].append(s)
+        return render(request, 'policies/settings.html', {
+            'categories': dict(categories),
+            'section': 'settings',
+        })
+
+    def post(self, request):
+        for s in AppSettings.objects.all():
+            s.value = request.POST.get(f'setting_{s.key}') == 'on'
+            s.save(update_fields=['value'])
+        messages.success(request, '✅ تنظیمات ذخیره شد')
+        return redirect('policies:settings')
+
+
 def ajax_policy_stats(request):
     """AJAX endpoint for dashboard stats"""
     total = InsurancePolicy.objects.count()

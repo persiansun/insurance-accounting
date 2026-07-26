@@ -465,3 +465,19 @@ class GuaranteeCheck(models.Model):
 
     def __str__(self):
         return f'چک {self.check_number} - {self.amount:,} ریال'
+
+
+class AppSettings(models.Model):
+    """تنظیمات برنامه — فعال/غیرفعال کردن ماژول‌ها"""
+    key = models.CharField('کلید', max_length=100, unique=True)
+    label = models.CharField('عنوان', max_length=200)
+    value = models.BooleanField('فعال', default=True)
+    category = models.CharField('دسته', max_length=100, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'تنظیمات'
+        verbose_name_plural = 'تنظیمات'
+        ordering = ['category', 'key']
+
+    def __str__(self):
+        return f'{self.label}: {"فعال" if self.value else "غیرفعال"}'
