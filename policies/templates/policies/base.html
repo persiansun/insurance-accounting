@@ -29,6 +29,74 @@
             --info: #0277bd;
             --gray-bg: #f5f6fa;
             --card-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --sidebar-bg: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        body.dark-mode {
+            --primary: #5c6bc0;
+            --primary-light: #7986cb;
+            --primary-dark: #3949ab;
+            --success: #66bb6a;
+            --danger: #ef5350;
+            --warning: #ffd54f;
+            --info: #4fc3f7;
+            --gray-bg: #1a1a2e;
+            --card-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            --card-bg: #16213e;
+            --text-color: #e0e0e0;
+            --text-muted: #9e9e9e;
+            --border-color: #2a2a4a;
+            --sidebar-bg: linear-gradient(180deg, #0d1452 0%, #070a2e 100%);
+        }
+
+        body.dark-mode .stat-card,
+        body.dark-mode .content-card {
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        body.dark-mode .table-custom thead {
+            background: #1a1a3e;
+        }
+
+        body.dark-mode .table-custom td,
+        body.dark-mode .table-custom th {
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode .form-control,
+        body.dark-mode .form-select {
+            background: #1a1a3e;
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        body.dark-mode .page-header h4 {
+            color: var(--primary-light);
+        }
+
+        body.dark-mode .btn-outline-custom {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        body.dark-mode .nav-tabs .nav-link {
+            color: var(--text-muted);
+        }
+
+        body.dark-mode .nav-tabs .nav-link.active {
+            color: var(--primary);
+            background: var(--card-bg);
+            border-color: var(--border-color);
         }
 
         * {
@@ -507,6 +575,9 @@
             <i class="fas fa-bars"></i>
         </button>
         <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-outline-custom" onclick="toggleDarkMode()" title="تغییر تم" id="darkModeBtn">
+                <i class="fas fa-moon"></i>
+            </button>
             <span class="text-muted small">
                 <i class="far fa-calendar ms-1"></i>
                 {{ today_date|default:'' }}
@@ -551,6 +622,27 @@
     function formatNumber(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
+
+    // Dark mode toggle
+    function toggleDarkMode() {
+        var body = document.body;
+        var btn = document.getElementById('darkModeBtn');
+        body.classList.toggle('dark-mode');
+        var isDark = body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark ? '1' : '0');
+        if (btn) {
+            btn.innerHTML = isDark ? '<i class=\"fas fa-sun\"></i>' : '<i class=\"fas fa-moon\"></i>';
+        }
+    }
+
+    // Load dark mode preference
+    document.addEventListener('DOMContentLoaded', function() {
+        if (localStorage.getItem('darkMode') === '1') {
+            document.body.classList.add('dark-mode');
+            var btn = document.getElementById('darkModeBtn');
+            if (btn) btn.innerHTML = '<i class=\"fas fa-sun\"></i>';
+        }
+    });
 
     // Auto-format date inputs globally: 14050501 → 1405/05/01 on blur
     document.addEventListener('DOMContentLoaded', function() {
