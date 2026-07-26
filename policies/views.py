@@ -1022,6 +1022,50 @@ class SettingsView(View):
         return redirect('policies:settings')
 
 
+class NotificationsView(View):
+    """مرکز اعلان‌ها و پیگیری‌ها"""
+
+    def get(self, request):
+        today = jdatetime.date.today()
+        today_str = today.strftime('%Y/%m/%d')
+
+        # اقساط سررسید امروز
+        due_today = Installment.objects.filter(
+            due_date=today_str, status__in=['pending', 'overdue']
+        ).select_related('policy').order_by('policy__policyholder')
+
+        # اقساط ۷ روز آینده
+        upcoming = []
+        for i in range(1, 8):
+            d = (today + jdatetime.timedelta(days=i)).strftime('%Y/%m/%d')
+            upcoming.extend(Installment.objects.filter(
+                due_date=d, status__in=['pending', 'overdue']
+            ).select_related('policy'))
+
+        # بیمه نامه‌های در حال انقضا (۳۰ روز آینده)
+        expiring = []
+        for i in range(30):
+            d = (today + jdatetime.timedelta(days=i)).strftime('%Y/%m/%d')
+            expiring.extend(InsurancePolicy.objects.filter(
+                end_date=d
+            ))
+
+        # دیرکردها
+        overdue = Installment.objects.filter(
+            status='overdue'
+        ).select_related('policy').order_by('due_date')[:20]
+
+        context = {
+            'due_today': due_today,
+            'upcoming': upcoming,
+            'expiring': expiring,
+            'overdue': overdue,
+            'today': today_str,
+            'section': 'notifications',
+        }
+        return render(request, 'policies/notifications.html', context)
+
+
 def ajax_policy_stats(request):
     """AJAX endpoint for dashboard stats"""
     total = InsurancePolicy.objects.count()

@@ -1,0 +1,117 @@
+{% extends 'policies/base.html' %}
+{% load static humanize %}
+
+{% block title %}مرکز اعلان‌ها{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-bell ms-2"></i>مرکز اعلان‌ها و پیگیری‌ها</h4>
+    <p class="text-muted">{{ today }}</p>
+</div>
+
+<div class="row g-3">
+    <!-- اقساط سررسید امروز -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5><i class="fas fa-calendar-day ms-2" style="color: var(--warning);"></i>اقساط سررسید امروز</h5>
+            {% if due_today %}
+            <div class="table-responsive">
+                <table class="table table-custom table-sm">
+                    <thead><tr><th>مشتری</th><th>قسط</th><th>مبلغ</th><th></th></tr></thead>
+                    <tbody>
+                        {% for d in due_today %}
+                        <tr>
+                            <td><a href="{% url 'policies:policy_detail' d.policy.pk %}">{{ d.policy.policyholder|truncatechars:25 }}</a></td>
+                            <td>{{ d.installment_number }}</td>
+                            <td class="fw-bold">{{ d.amount|intcomma }}</td>
+                            <td><a href="{% url 'policies:policy_detail' d.policy.pk %}" class="btn btn-sm btn-outline-custom"><i class="fas fa-arrow-left"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3"><i class="fas fa-check-circle" style="color: var(--success);"></i> هیچ قسط سررسیدی برای امروز نیست.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- دیرکردها -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5><i class="fas fa-exclamation-triangle ms-2" style="color: var(--danger);"></i>دیرکردها</h5>
+            {% if overdue %}
+            <div class="table-responsive">
+                <table class="table table-custom table-sm">
+                    <thead><tr><th>مشتری</th><th>مبلغ</th><th>سررسید</th><th></th></tr></thead>
+                    <tbody>
+                        {% for d in overdue %}
+                        <tr>
+                            <td><a href="{% url 'policies:policy_detail' d.policy.pk %}">{{ d.policy.policyholder|truncatechars:25 }}</a></td>
+                            <td class="fw-bold">{{ d.amount|intcomma }}</td>
+                            <td><span class="status-badge status-overdue">{{ d.due_date }}</span></td>
+                            <td><a href="{% url 'policies:policy_detail' d.policy.pk %}" class="btn btn-sm btn-outline-custom"><i class="fas fa-arrow-left"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3"><i class="fas fa-check-circle" style="color: var(--success);"></i> هیچ دیرکردی وجود ندارد.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- اقساط ۷ روز آینده -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5><i class="fas fa-clock ms-2" style="color: var(--info);"></i>اقساط ۷ روز آینده</h5>
+            {% if upcoming %}
+            <div class="table-responsive">
+                <table class="table table-custom table-sm">
+                    <thead><tr><th>مشتری</th><th>قسط</th><th>مبلغ</th><th>سررسید</th></tr></thead>
+                    <tbody>
+                        {% for u in upcoming %}
+                        <tr>
+                            <td><a href="{% url 'policies:policy_detail' u.policy.pk %}">{{ u.policy.policyholder|truncatechars:25 }}</a></td>
+                            <td>{{ u.installment_number }}</td>
+                            <td class="fw-bold">{{ u.amount|intcomma }}</td>
+                            <td>{{ u.due_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3">هیچ قسطی در ۷ روز آینده سررسید نمی‌شود.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- بیمه نامه‌های در حال انقضا -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5><i class="fas fa-file-contract ms-2" style="color: #9c27b0;"></i>بیمه نامه‌های در حال انقضا (۳۰ روز)</h5>
+            {% if expiring %}
+            <div class="table-responsive">
+                <table class="table table-custom table-sm">
+                    <thead><tr><th>مشتری</th><th>نوع بیمه</th><th>پایان</th><th></th></tr></thead>
+                    <tbody>
+                        {% for e in expiring %}
+                        <tr>
+                            <td><a href="{% url 'policies:policy_detail' e.pk %}">{{ e.policyholder|truncatechars:25 }}</a></td>
+                            <td>{{ e.insurance_type.name|default:'-' }}</td>
+                            <td><span class="status-badge status-partial">{{ e.end_date }}</span></td>
+                            <td><a href="{% url 'policies:policy_detail' e.pk %}" class="btn btn-sm btn-outline-custom"><i class="fas fa-arrow-left"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3">هیچ بیمه نامه‌ای در ۳۰ روز آینده منقضی نمی‌شود.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

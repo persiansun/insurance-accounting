@@ -29,4 +29,5 @@ urlpatterns = [
     path('backup/download/', views.DownloadBackupView.as_view(), name='download_backup'),
     path('restore/', views.RestoreDatabaseView.as_view(), name='restore_db'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
+    path('notifications/', views.NotificationsView.as_view(), name='notifications'),
 ]
