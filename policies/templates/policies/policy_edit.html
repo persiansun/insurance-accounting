@@ -182,6 +182,23 @@
             </div>
         </div>
 
+        <!-- Commission -->
+        <div class="row g-3 mt-1">
+            <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3" style="color: var(--success);">
+                    <i class="fas fa-percentage ms-1"></i> کمیسیون معرف
+                </h6>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.commission_percent.label }}</label>
+                {{ form.commission_percent }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">{{ form.commission_amount.label }}</label>
+                {{ form.commission_amount }}
+            </div>
+        </div>
+
         <div class="d-flex gap-2 mt-4 pt-3 border-top">
             <button type="submit" class="btn btn-primary-custom">
                 <i class="fas fa-save ms-1"></i> ذخیره تغییرات

@@ -1132,6 +1132,85 @@ class CustomerDetailView(View):
         return render(request, 'policies/customer_detail.html', context)
 
 
+class CommissionReportView(View):
+    """گزارش کمیسیون معرف‌ها"""
+
+    def get(self, request):
+        from django.db.models import Sum, Count, Q
+        from datetime import datetime
+
+        date_from = request.GET.get('date_from', '')
+        date_to = request.GET.get('date_to', '')
+
+        policies = InsurancePolicy.objects.exclude(
+            Q(commission_percent__isnull=True) & Q(commission_amount__isnull=True)
+        )
+
+        if date_from:
+            policies = policies.filter(start_date__gte=date_from)
+        if date_to:
+            policies = policies.filter(start_date__lte=date_to)
+
+        # Group by introducer
+        agents = {}
+        for p in policies:
+            name = p.introducer_name or p.agent_name or 'نامشخص'
+            phone = p.introducer_phone or ''
+            if name not in agents:
+                agents[name] = {'name': name, 'phone': phone, 'policies': [], 'total_commission': 0, 'total_premium': 0}
+            agents[name]['policies'].append(p)
+            agents[name]['total_premium'] += p.total_with_tax or 0
+            agents[name]['total_commission'] += p.commission_amount or 0
+
+        return render(request, 'policies/commission_report.html', {
+            'agents': sorted(agents.values(), key=lambda a: a['total_commission'], reverse=True),
+            'date_from': date_from,
+            'date_to': date_to,
+            'section': 'reports',
+        })
+
+
+class ExportCommissionView(View):
+    """خروجی اکسل کمیسیون"""
+
+    def get(self, request):
+        import pandas as pd
+        from django.http import HttpResponse
+        from django.db.models import Q
+
+        date_from = request.GET.get('date_from', '')
+        date_to = request.GET.get('date_to', '')
+
+        policies = InsurancePolicy.objects.exclude(
+            Q(commission_percent__isnull=True) & Q(commission_amount__isnull=True)
+        )
+        if date_from:
+            policies = policies.filter(start_date__gte=date_from)
+        if date_to:
+            policies = policies.filter(start_date__lte=date_to)
+
+        data = []
+        for i, p in enumerate(policies, 1):
+            data.append({
+                'ردیف': i,
+                'معرف': p.introducer_name or p.agent_name or '',
+                'شماره تماس': p.introducer_phone or '',
+                'مشتری': p.policyholder,
+                'نوع بیمه': p.insurance_type.name if p.insurance_type else '',
+                'حق بیمه': p.total_with_tax or 0,
+                'درصد کمیسیون': f'{p.commission_percent}%' if p.commission_percent else '',
+                'مبلغ کمیسیون': p.commission_amount or 0,
+                'تاریخ شروع': p.start_date or '',
+            })
+
+        df = pd.DataFrame(data)
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="commission_report.xlsx"'
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='کمیسیون')
+        return response
+
+
 def ajax_policy_stats(request):
     """AJAX endpoint for dashboard stats"""
     total = InsurancePolicy.objects.count()

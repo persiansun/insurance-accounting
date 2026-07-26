@@ -112,6 +112,17 @@ class InsurancePolicy(models.Model):
         help_text='مثال: 09121234567'
     )
 
+    # Commission
+    commission_percent = models.DecimalField(
+        'درصد کمیسیون', max_digits=5, decimal_places=2,
+        blank=True, null=True, default=None,
+        help_text='مثال: 10 = 10%'
+    )
+    commission_amount = models.BigIntegerField(
+        'مبلغ کمیسیون (ریال)', blank=True, null=True, default=None,
+        help_text='به صورت خودکار محاسبه می‌شود'
+    )
+
     archive_number = models.CharField(
         'شماره بایگانی', max_length=100, blank=True, null=True
     )

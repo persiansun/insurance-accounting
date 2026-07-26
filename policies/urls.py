@@ -32,4 +32,6 @@ urlpatterns = [
     path('notifications/', views.NotificationsView.as_view(), name='notifications'),
     path('customers/', views.CustomerListView.as_view(), name='customer_list'),
     path('customers/<str:phone>/', views.CustomerDetailView.as_view(), name='customer_detail'),
+    path('reports/commission/', views.CommissionReportView.as_view(), name='commission_report'),
+    path('reports/commission/export/excel/', views.ExportCommissionView.as_view(), name='export_commission'),
 ]

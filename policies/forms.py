@@ -182,6 +182,7 @@ class PolicyEditForm(forms.ModelForm):
             'body_coverage', 'financial_coverage', 'vehicle_value',
             'down_payment',
             'agent_name', 'agent_phone', 'introducer_name', 'introducer_phone',
+            'commission_percent', 'commission_amount',
             'contract_description', 'status',
         ]
         widgets = {
@@ -228,6 +229,12 @@ class PolicyEditForm(forms.ModelForm):
             'introducer_phone': forms.TextInput(attrs={
                 'class': 'form-control', 'dir': 'ltr', 'placeholder': '09121234567'
             }),
+            'commission_percent': forms.NumberInput(attrs={
+                'class': 'form-control', 'dir': 'ltr', 'placeholder': 'مثال: 10'
+            }),
+            'commission_amount': forms.NumberInput(attrs={
+                'class': 'form-control', 'dir': 'ltr', 'placeholder': 'ریال'
+            }),
             'contract_description': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -255,6 +262,8 @@ class PolicyEditForm(forms.ModelForm):
             'agent_phone': 'شماره تماس نماینده',
             'introducer_name': 'معرف / ضامن',
             'introducer_phone': 'شماره تماس معرف',
+            'commission_percent': 'درصد کمیسیون',
+            'commission_amount': 'مبلغ کمیسیون (ریال)',
             'contract_description': 'شرح قرارداد',
             'status': 'وضعیت',
         }
