@@ -1117,18 +1117,23 @@ class CustomerDetailView(View):
     """مشاهده همه بیمه نامه‌های یک مشتری"""
 
     def get(self, request, phone):
-        if phone == 'no-phone':
-            policies = InsurancePolicy.objects.filter(phone__isnull=True)
-        else:
+        import urllib.parse
+        phone = urllib.parse.unquote(phone)
+
+        # Try exact phone match first
+        policies = InsurancePolicy.objects.none()
+        if phone and phone != 'no-phone':
             policies = InsurancePolicy.objects.filter(phone=phone)
 
+        # If no results, try exact policyholder match
         if not policies.exists():
-            from urllib.parse import unquote
-            name = unquote(phone)
-            policies = InsurancePolicy.objects.filter(policyholder__icontains=name)
+            policies = InsurancePolicy.objects.filter(policyholder__exact=phone)
+
+        # Final fallback: try starts with
+        if not policies.exists():
+            policies = InsurancePolicy.objects.filter(policyholder__startswith=phone[:20])
 
         customer_name = policies.first().policyholder if policies.exists() else 'نامشخص'
-
         context = {
             'customer_name': customer_name,
             'customer_phone': phone,
