@@ -4,78 +4,86 @@
 {% block title %}حسابداری{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center">
     <h4><i class="fas fa-calculator ms-2"></i>حسابداری</h4>
+    <form method="GET" class="d-flex gap-2">
+        <select name="year" class="form-select" onchange="this.form.submit()" style="width:auto;">
+            {% for y in years %}
+            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </form>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-md-4">
         <div class="stat-card text-center">
             <div class="icon" style="background: #e8f5e9; color: #2e7d32;"><i class="fas fa-arrow-down"></i></div>
-            <div class="number" style="color: var(--success);">{{ total_income|intcomma }}</div>
+            <div class="number" style="color: var(--success); font-size:1.3rem;">{{ total_income|intcomma }}</div>
             <div class="label">کل درآمد (واریزی‌ها)</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="stat-card text-center">
             <div class="icon" style="background: #ffebee; color: #c62828;"><i class="fas fa-arrow-up"></i></div>
-            <div class="number" style="color: var(--danger);">{{ total_expenses|intcomma }}</div>
-            <div class="label">کل هزینه‌ها</div>
+            <div class="number" style="color: var(--danger); font-size:1.3rem;">{{ total_expenses|intcomma }}</div>
+            <div class="label">کل هزینه‌ها ({{ selected_year }})</div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="stat-card text-center">
             <div class="icon" style="background: #e3f2fd; color: #1565c0;"><i class="fas fa-chart-line"></i></div>
-            <div class="number" style="color: {% if profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">{{ profit|intcomma }}</div>
+            <div class="number" style="color: {% if profit >= 0 %}var(--success){% else %}var(--danger){% endif %}; font-size:1.3rem;">{{ profit|intcomma }}</div>
             <div class="label">سود / زیان</div>
         </div>
     </div>
 </div>
 
 <div class="row g-3">
-    <!-- Expenses -->
-    <div class="col-lg-6">
+    <!-- Expenses by Month -->
+    <div class="col-lg-7">
         <div class="content-card">
-            <h5><i class="fas fa-minus-circle ms-2" style="color: var(--danger);"></i>ثبت هزینه</h5>
-            <form method="POST" action="{% url 'policies:add_expense' %}" class="row g-2 mb-3 p-2" style="background: #ffebee; border-radius: 8px;">
-                {% csrf_token %}
-                <div class="col-md-4">
-                    <label class="small text-muted">دسته</label>
-                    <select name="category" class="form-select form-select-sm">
-                        {% for cat in expense_categories %}
-                        <option value="{{ cat.pk }}">{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
+            <h5><i class="fas fa-calendar-alt ms-2" style="color: var(--danger);"></i>هزینه‌های ماهانه {{ selected_year }}</h5>
+            <hr>
+            <div class="row g-2">
+                {% for md in months_data %}
+                <div class="col-md-6">
+                    <div class="p-2 rounded" style="background: {% if selected_month and selected_month.key == md.key %}#ffebee{% else %}#f5f5f5{% endif %}; border: 1px solid #ddd; cursor: pointer;" onclick="window.location='?year={{ selected_year }}&month={{ md.key|slice:'5:7' }}'">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ md.label }}</strong>
+                            <span class="fw-bold" style="color: var(--danger);">{{ md.total|intcomma }}</span>
+                        </div>
+                        <small class="text-muted">{{ md.count }} هزینه</small>
+                    </div>
                 </div>
-                <div class="col-md-8">
-                    <label class="small text-muted">عنوان</label>
-                    <input type="text" name="title" class="form-control form-control-sm" required>
+                {% empty %}
+                <div class="col-12 text-center py-4 text-muted">
+                    <i class="fas fa-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-2">هزینه‌ای برای {{ selected_year }} ثبت نشده.</p>
                 </div>
-                <div class="col-md-4">
-                    <label class="small text-muted">مبلغ (ریال)</label>
-                    <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="small text-muted">تاریخ</label>
-                    <input type="text" name="date" class="form-control form-control-sm date-input" dir="ltr" required>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-sm w-100" style="background: var(--danger); color: white;"><i class="fas fa-plus"></i> ثبت</button>
-                </div>
-            </form>
-            {% if expenses %}
-            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if selected_month %}
+        <div class="content-card mt-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-list ms-2" style="color: var(--danger);"></i>هزینه‌های {{ selected_month.label }} {{ selected_year }}</h5>
+                <a href="?year={{ selected_year }}" class="btn btn-sm btn-outline-custom">بستن</a>
+            </div>
+            <div class="table-responsive">
                 <table class="table table-custom table-sm">
-                    <thead><tr><th>عنوان</th><th>دسته</th><th>مبلغ</th><th>تاریخ</th><th></th></tr></thead>
+                    <thead><tr><th>عنوان</th><th>دسته</th><th>مبلغ</th><th>تاریخ</th><th>توضیحات</th><th></th></tr></thead>
                     <tbody>
-                        {% for e in expenses %}
+                        {% for e in selected_month.expenses %}
                         <tr>
-                            <td><small>{{ e.title|truncatechars:20 }}</small></td>
+                            <td><small>{{ e.title|truncatechars:25 }}</small></td>
                             <td><small>{% if e.category %}{{ e.category.name }}{% else %}-{% endif %}</small></td>
                             <td class="fw-bold" style="color: var(--danger);">{{ e.amount|intcomma }}</td>
                             <td><small>{{ e.date }}</small></td>
+                            <td><small class="text-muted">{{ e.description|default:'-'|truncatechars:20 }}</small></td>
                             <td>
-                                <form method="POST" action="{% url 'policies:delete_expense' e.pk %}" style="display:inline;">
+                                <form method="POST" action="{% url 'policies:delete_expense' e.pk %}">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0"><i class="fas fa-times"></i></button>
                                 </form>
@@ -83,15 +91,17 @@
                         </tr>
                         {% endfor %}
                     </tbody>
+                    <tfoot>
+                        <tr class="fw-bold"><td colspan="2">جمع</td><td style="color: var(--danger);">{{ selected_month.total|intcomma }}</td><td colspan="3"></td></tr>
+                    </tfoot>
                 </table>
             </div>
-            {% else %}
-            <p class="text-muted small text-center py-2">هیچ هزینه‌ای ثبت نشده.</p>
-            {% endif %}
         </div>
+        {% endif %}
+
         {% if cat_stats %}
         <div class="content-card mt-3">
-            <h5><i class="fas fa-pie-chart ms-2"></i>تفکیک هزینه‌ها</h5>
+            <h5><i class="fas fa-pie-chart ms-2"></i>تفکیک هزینه‌ها ({{ selected_year }})</h5>
             {% for s in cat_stats %}
             <div class="d-flex justify-content-between align-items-center py-1">
                 <small>{{ s.name }}</small>
@@ -105,68 +115,86 @@
         {% endif %}
     </div>
 
-    <!-- Bank -->
-    <div class="col-lg-6">
+    <!-- Right Column: Add Expense + Bank -->
+    <div class="col-lg-5">
         <div class="content-card">
-            <h5><i class="fas fa-university ms-2" style="color: var(--info);"></i>حساب‌های بانکی</h5>
-            <form method="POST" action="{% url 'policies:add_bank' %}" class="row g-2 mb-3 p-2" style="background: #e3f2fd; border-radius: 8px;">
+            <h5><i class="fas fa-plus-circle ms-2" style="color: var(--danger);"></i>ثبت هزینه جدید</h5>
+            <form method="POST" action="{% url 'policies:add_expense' %}" class="row g-2">
                 {% csrf_token %}
-                <div class="col-md-4"><input type="text" name="name" class="form-control form-control-sm" placeholder="نام بانک" required></div>
-                <div class="col-md-4"><input type="text" name="account_number" class="form-control form-control-sm" dir="ltr" placeholder="شماره حساب"></div>
-                <div class="col-md-4"><input type="number" name="balance" class="form-control form-control-sm" dir="ltr" placeholder="موجودی اولیه"></div>
-                <div class="col-md-12"><button type="submit" class="btn btn-sm btn-primary-custom w-100"><i class="fas fa-plus"></i> افزودن حساب</button></div>
+                <div class="col-6">
+                    <label class="small text-muted">دسته</label>
+                    <select name="category" class="form-select form-select-sm">
+                        {% for cat in expense_categories %}
+                        <option value="{{ cat.pk }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="small text-muted">عنوان</label>
+                    <input type="text" name="title" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-4">
+                    <label class="small text-muted">مبلغ (ریال)</label>
+                    <input type="number" name="amount" class="form-control form-control-sm" dir="ltr" required>
+                </div>
+                <div class="col-4">
+                    <label class="small text-muted">تاریخ</label>
+                    <input type="text" name="date" class="form-control form-control-sm date-input" dir="ltr" required>
+                </div>
+                <div class="col-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm w-100" style="background: var(--danger); color: white;"><i class="fas fa-plus"></i> ثبت</button>
+                </div>
+                <div class="col-12">
+                    <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="توضیحات (اختیاری)"></textarea>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bank -->
+        <div class="content-card mt-3">
+            <h5><i class="fas fa-university ms-2" style="color: var(--info);"></i>حساب‌های بانکی</h5>
+            <form method="POST" action="{% url 'policies:add_bank' %}" class="row g-2 mb-2 p-2" style="background: #e3f2fd; border-radius: 8px;">
+                {% csrf_token %}
+                <div class="col-5"><input type="text" name="name" class="form-control form-control-sm" placeholder="نام بانک" required></div>
+                <div class="col-5"><input type="text" name="account_number" class="form-control form-control-sm" dir="ltr" placeholder="شماره حساب"></div>
+                <div class="col-2"><button type="submit" class="btn btn-sm btn-primary-custom w-100"><i class="fas fa-plus"></i></button></div>
             </form>
             {% if accounts %}
             <div class="table-responsive">
                 <table class="table table-custom table-sm">
-                    <thead><tr><th>بانک</th><th>شماره حساب</th><th>موجودی</th></tr></thead>
+                    <thead><tr><th>بانک</th><th>موجودی</th></tr></thead>
                     <tbody>
                         {% for a in accounts %}
                         <tr>
                             <td><strong>{{ a.name }}</strong></td>
-                            <td><small dir="ltr">{{ a.account_number|default:'-' }}</small></td>
                             <td class="fw-bold" style="color: var(--success);">{{ a.balance|intcomma }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-
-            <h6 class="mt-3"><i class="fas fa-exchange-alt ms-1"></i> ثبت تراکنش بانکی</h6>
-            <form method="POST" action="{% url 'policies:add_bank_transaction' %}" class="row g-2">
+            <h6 class="mt-2">تراکنش جدید</h6>
+            <form method="POST" action="{% url 'policies:add_bank_transaction' %}" class="row g-1">
                 {% csrf_token %}
-                <div class="col-md-4">
+                <div class="col-4">
                     <select name="account" class="form-select form-select-sm">
-                        {% for a in accounts %}
-                        <option value="{{ a.pk }}">{{ a.name }}</option>
-                        {% endfor %}
+                        {% for a in accounts %}<option value="{{ a.pk }}">{{ a.name }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-3">
                     <select name="transaction_type" class="form-select form-select-sm">
                         <option value="deposit">واریز</option>
                         <option value="withdraw">برداشت</option>
                     </select>
                 </div>
-                <div class="col-md-3"><input type="number" name="amount" class="form-control form-control-sm" dir="ltr" placeholder="مبلغ" required></div>
-                <div class="col-md-2"><input type="text" name="date" class="form-control form-control-sm date-input" dir="ltr" placeholder="تاریخ"></div>
-                <div class="col-12">
-                    <div class="row g-2">
-                        <div class="col-md-10"><input type="text" name="description" class="form-control form-control-sm" placeholder="شرح"></div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-sm btn-success w-100">ثبت</button></div>
-                    </div>
-                </div>
+                <div class="col-3"><input type="number" name="amount" class="form-control form-control-sm" dir="ltr" placeholder="مبلغ" required></div>
+                <div class="col-2"><input type="text" name="date" class="form-control form-control-sm date-input" dir="ltr" placeholder="تاریخ"></div>
+                <div class="col-12"><input type="text" name="description" class="form-control form-control-sm" placeholder="شرح"></div>
+                <div class="col-12"><button type="submit" class="btn btn-sm btn-success w-100">ثبت تراکنش</button></div>
             </form>
             {% else %}
-            <p class="text-muted small text-center py-2">حسابی ثبت نشده.</p>
+            <p class="text-muted small text-center py-2">اول یک حساب بانکی اضافه کنید.</p>
             {% endif %}
-        </div>
-
-        <!-- Customer Account Card -->
-        <div class="content-card mt-3">
-            <h5><i class="fas fa-address-card ms-2" style="color: #e65100;"></i>کارت حساب مشتریان</h5>
-            <p class="text-muted small">مشاهده بدهی و اعتبار هر مشتری</p>
-            <a href="{% url 'policies:customer_list' %}" class="btn btn-outline-custom w-100">مشاهده مشتریان</a>
         </div>
     </div>
 </div>

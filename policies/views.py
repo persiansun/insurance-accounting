@@ -946,30 +946,84 @@ class AccountingView(View):
 
     def get(self, request):
         from django.db.models import Sum
+        from collections import defaultdict
 
-        # Expenses
-        expenses = Expense.objects.all().order_by('-date', '-created_at')[:50]
-        total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
+        year = request.GET.get('year', '')
+        month = request.GET.get('month', '')
+        today = jdatetime.date.today()
+        current_year = today.strftime('%Y')
+
+        if not year:
+            year = current_year
+
+        # All expenses
+        all_expenses = Expense.objects.all().order_by('-date', '-created_at')
+
+        # Group by year/month
+        monthly_groups = defaultdict(list)
+        for e in all_expenses:
+            m = e.date[:7] if e.date and len(e.date) >= 7 else 'نامشخص'
+            monthly_groups[m].append(e)
+
+        # Sort months descending
+        sorted_months = sorted(monthly_groups.keys(), reverse=True)
+
+        # Get available years
+        years = set()
+        for e in all_expenses:
+            if e.date and len(e.date) >= 4:
+                years.add(e.date[:4])
+        years = sorted(years, reverse=True)
+
+        # Filter by year
+        expenses = Expense.objects.filter(date__startswith=year).order_by('-date', '-created_at')
+
+        # Group by month
+        months_data = []
+        for e in expenses:
+            m = e.date[:7] if e.date and len(e.date) >= 7 else '0000-00'
+            if not any(md['key'] == m for md in months_data):
+                month_expenses = expenses.filter(date__startswith=m)
+                total = month_expenses.aggregate(total=Sum('amount'))['total'] or 0
+                months_data.append({
+                    'key': m,
+                    'label': _month_name(m[5:7]) if len(m) >= 7 else 'نامشخص',
+                    'total': total,
+                    'count': month_expenses.count(),
+                    'expenses': month_expenses,
+                })
+        months_data.sort(key=lambda x: x['key'], reverse=True)
+
+        # If month selected, filter
+        selected_month = None
+        if month:
+            for md in months_data:
+                if md['key'].endswith(f'-{month}'):
+                    selected_month = md
+                    break
+
         expense_categories = ExpenseCategory.objects.filter(is_active=True)
 
-        # Expense stats by category
+        # Expense stats by category (for current year)
         cat_stats = []
         for cat in expense_categories:
-            total = Expense.objects.filter(category=cat).aggregate(total=Sum('amount'))['total'] or 0
+            total = Expense.objects.filter(category=cat, date__startswith=year).aggregate(
+                total=Sum('amount')
+            )['total'] or 0
             if total > 0:
                 cat_stats.append({'name': cat.name, 'total': total, 'color': cat.color})
 
-        # Bank accounts
-        accounts = BankAccount.objects.filter(is_active=True)
-
-        # Total income from payments
+        total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
         total_income = Payment.objects.aggregate(total=Sum('amount'))['total'] or 0
-
-        # Profit/Loss
         profit = total_income - total_expenses
 
+        accounts = BankAccount.objects.filter(is_active=True)
+
         context = {
-            'expenses': expenses,
+            'months_data': months_data,
+            'selected_month': selected_month,
+            'selected_year': year,
+            'years': years,
             'total_expenses': total_expenses,
             'total_income': total_income,
             'profit': profit,
@@ -979,6 +1033,13 @@ class AccountingView(View):
             'section': 'accounting',
         }
         return render(request, 'policies/accounting.html', context)
+
+
+def _month_name(m):
+    names = {'01': 'فروردین', '02': 'اردیبهشت', '03': 'خرداد', '04': 'تیر',
+             '05': 'مرداد', '06': 'شهریور', '07': 'مهر', '08': 'آبان',
+             '09': 'آذر', '10': 'دی', '11': 'بهمن', '12': 'اسفند'}
+    return names.get(m, m)
 
 
 class AddExpenseView(View):
