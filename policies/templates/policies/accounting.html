@@ -45,78 +45,59 @@
         <div class="content-card">
             <h5><i class="fas fa-calendar-alt ms-2" style="color: var(--danger);"></i>هزینه‌های ماهانه {{ selected_year }}</h5>
             <hr>
-            <div class="row g-2">
-                {% for md in months_data %}
-                <div class="col-md-6">
-                    <div class="p-2 rounded" style="background: {% if selected_month and selected_month.key == md.key %}#ffebee{% else %}#f5f5f5{% endif %}; border: 1px solid #ddd; cursor: pointer;" onclick="window.location='?year={{ selected_year }}&month={{ md.key|slice:'5:7' }}'">
-                        <div class="d-flex justify-content-between">
-                            <strong>{{ md.label }}</strong>
-                            <span class="fw-bold" style="color: var(--danger);">{{ md.total|intcomma }}</span>
-                        </div>
-                        <small class="text-muted">{{ md.count }} هزینه</small>
+            {% for md in months_data %}
+            <div class="mb-2">
+                <div class="p-2 rounded d-flex justify-content-between align-items-center"
+                     style="background: #f5f5f5; border: 1px solid #ddd; cursor: pointer;"
+                     onclick="toggleMonth('month-{{ forloop.counter }}', this)">
+                    <div>
+                        <strong>{{ md.label }}</strong>
+                        <small class="text-muted ms-2">({{ md.count }} هزینه)</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold" style="color: var(--danger);">{{ md.total|intcomma }}</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
                     </div>
                 </div>
-                {% empty %}
-                <div class="col-12 text-center py-4 text-muted">
-                    <i class="fas fa-inbox" style="font-size: 3rem;"></i>
-                    <p class="mt-2">هزینه‌ای برای {{ selected_year }} ثبت نشده.</p>
+                <div id="month-{{ forloop.counter }}" style="display:none;" class="mt-1">
+                    <div class="table-responsive">
+                        <table class="table table-custom table-sm">
+                            <thead><tr><th>عنوان</th><th>دسته</th><th>مبلغ</th><th>تاریخ</th><th>توضیحات</th><th></th></tr></thead>
+                            <tbody>
+                                {% for e in md.expenses %}
+                                <tr>
+                                    <td><small>{{ e.title|truncatechars:25 }}</small></td>
+                                    <td><small>{% if e.category %}{{ e.category.name }}{% else %}-{% endif %}</small></td>
+                                    <td class="fw-bold" style="color: var(--danger);">{{ e.amount|intcomma }}</td>
+                                    <td><small>{{ e.date }}</small></td>
+                                    <td><small class="text-muted">{{ e.description|default:'-'|truncatechars:25 }}</small></td>
+                                    <td>
+                                        <form method="POST" action="{% url 'policies:delete_expense' e.pk %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0"><i class="fas fa-times"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold"><td colspan="2">جمع</td><td style="color: var(--danger);">{{ md.total|intcomma }}</td><td colspan="3"></td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
-                {% endfor %}
             </div>
-        </div>
-
-        {% if selected_month %}
-        <div class="content-card mt-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5><i class="fas fa-list ms-2" style="color: var(--danger);"></i>هزینه‌های {{ selected_month.label }} {{ selected_year }}</h5>
-                <a href="?year={{ selected_year }}" class="btn btn-sm btn-outline-custom">بستن</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-custom table-sm">
-                    <thead><tr><th>عنوان</th><th>دسته</th><th>مبلغ</th><th>تاریخ</th><th>توضیحات</th><th></th></tr></thead>
-                    <tbody>
-                        {% for e in selected_month.expenses %}
-                        <tr>
-                            <td><small>{{ e.title|truncatechars:25 }}</small></td>
-                            <td><small>{% if e.category %}{{ e.category.name }}{% else %}-{% endif %}</small></td>
-                            <td class="fw-bold" style="color: var(--danger);">{{ e.amount|intcomma }}</td>
-                            <td><small>{{ e.date }}</small></td>
-                            <td><small class="text-muted">{{ e.description|default:'-'|truncatechars:20 }}</small></td>
-                            <td>
-                                <form method="POST" action="{% url 'policies:delete_expense' e.pk %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0"><i class="fas fa-times"></i></button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr class="fw-bold"><td colspan="2">جمع</td><td style="color: var(--danger);">{{ selected_month.total|intcomma }}</td><td colspan="3"></td></tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if cat_stats %}
-        <div class="content-card mt-3">
-            <h5><i class="fas fa-pie-chart ms-2"></i>تفکیک هزینه‌ها ({{ selected_year }})</h5>
-            {% for s in cat_stats %}
-            <div class="d-flex justify-content-between align-items-center py-1">
-                <small>{{ s.name }}</small>
-                <small class="fw-bold">{{ s.total|intcomma }}</small>
-            </div>
-            <div class="progress-custom mb-2">
-                <div class="progress-bar" role="progressbar" style="width: {% widthratio s.total total_expenses 100 %}%; background: {{ s.color }};"></div>
+            {% empty %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-inbox" style="font-size: 3rem;"></i>
+                <p class="mt-2">هزینه‌ای برای {{ selected_year }} ثبت نشده.</p>
             </div>
             {% endfor %}
-        </div>
-        {% endif %}
-    </div>
+            </div>
+            </div>
 
-    <!-- Right Column: Add Expense + Bank -->
-    <div class="col-lg-5">
+            <!-- Right Column -->
+            <div class="col-lg-5">
         <div class="content-card">
             <h5><i class="fas fa-plus-circle ms-2" style="color: var(--danger);"></i>ثبت هزینه جدید</h5>
             <form method="POST" action="{% url 'policies:add_expense' %}" class="row g-2">
@@ -198,4 +179,20 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleMonth(id, btn) {
+    var div = document.getElementById(id);
+    var icon = btn.querySelector('.fa-chevron-down, .fa-chevron-up');
+    if (div.style.display === 'none') {
+        div.style.display = 'block';
+        if (icon) icon.className = 'fas fa-chevron-up';
+    } else {
+        div.style.display = 'none';
+        if (icon) icon.className = 'fas fa-chevron-down';
+    }
+}
+</script>
 {% endblock %}
